@@ -469,9 +469,23 @@ dedupe_by_accession <- function(df) {
 #' to avoid silent drops.  email is NA for ENA rows (not available post-join).
 parse_ena_row <- function(row) {
   # join_ena.py outputs: accession, title, center_name, first_public_date,
-  # sample_countries (list), sample_centers (list), n_experiments.
+  # sample_countries (list), sample_centers (list), sample_brokers (list),
+  # n_experiments.
   affil_vals   <- c(row$center_name, unlist(row$sample_centers))
   country_vals <- unlist(row$sample_countries)
+
+  # Broker: sra-study carries no broker_name of its own, so inherit the broker
+  # from the study's joined samples (sample_brokers, surfaced by join_ena.py)
+  # when present, falling back to the study's center_name.  Matches the sample
+  # path (broker_name preferred over center_name) under the "Broker / Center"
+  # colour mode.
+  sample_brokers <- unlist(row$sample_brokers)
+  sample_brokers <- sample_brokers[!is.na(sample_brokers) & nzchar(sample_brokers)]
+  broker_val <- if (length(sample_brokers) > 0L) {
+    sample_brokers[[1L]]
+  } else {
+    row$center_name %||% NA_character_
+  }
 
   # first_public_date from sra-experiment (earliest across experiments for the study).
   # Format is YYYYMMDD compact — handled by parse_ebi_date().
@@ -489,7 +503,7 @@ parse_ena_row <- function(row) {
     quarter     = quarter(parsed_date),
     month       = month(parsed_date),
     institution = to_abbrev(as.character(normalise_institution(affil_vals))[1L]),
-    broker      = row$center_name %||% NA_character_
+    broker      = broker_val
   )
 }
 
@@ -550,7 +564,11 @@ parse_sra_sample <- function(entry) {
     quarter     = quarter(parsed_date),
     month       = month(parsed_date),
     institution = to_abbrev(as.character(normalise_institution(affil_vals))[1L]),
-    broker      = broker_name %||% center_name %||% NA_character_
+    # broker_name first, center_name as fallback.  Note: `%||%` only coalesces
+    # NULL/empty, not NA — and pick_field() returns NA_character_ when a field is
+    # absent, so chaining `broker_name %||% center_name` would keep the NA and
+    # never fall back.  pick_field() over both keys gives the intended fallback.
+    broker      = pick_field(f, c("broker_name", "center_name"))
   )
 }
 
