@@ -173,6 +173,7 @@ def load_samples() -> pd.DataFrame:
             "sample_acc":     e.get("id", "") or _fv(f, "acc"),
             "sample_country": _fv(f, "country"),
             "sample_center":  _fv(f, "center_name"),
+            "sample_broker":  _fv(f, "broker_name"),
             "sample_region":  _fv(f, "region"),
             # broker_name, alias, description are fetched but were previously
             # dropped before the Norwegian filter; include them now.
@@ -310,6 +311,7 @@ def main():
         exp_centers       = ("exp_center",          join_unique),
         sample_countries  = ("sample_country",      join_unique),
         sample_centers    = ("sample_center",       join_unique),
+        sample_brokers    = ("sample_broker",       join_unique),
         sample_regions    = ("sample_region",       join_unique),
         exp_text_blob     = ("exp_text",            lambda s: " ".join(s.dropna())),
         sample_text_blob  = ("sample_text",         lambda s: " ".join(s.dropna())),
@@ -329,7 +331,7 @@ def main():
         "study_text",
         "exp_text_blob",
         "exp_countries", "exp_centers",
-        "sample_countries", "sample_centers", "sample_regions",
+        "sample_countries", "sample_centers", "sample_brokers", "sample_regions",
         "sample_text_blob",
     ]
     signal_cols = [c for c in signal_cols if c in df.columns]
@@ -356,6 +358,7 @@ def main():
         "first_public_date":  "first_public_date",
         "sample_countries":   "sample_countries_str",
         "sample_centers":     "sample_centers_str",
+        "sample_brokers":     "sample_brokers_str",
         "n_experiments":      "n_experiments",
     }
     present = {k: v for k, v in output_cols.items() if k in df_nor.columns}
@@ -372,6 +375,7 @@ def main():
         row["domain"] = "sra-study"
         row["sample_countries"] = pipe_to_list(row.pop("sample_countries_str", ""))
         row["sample_centers"]   = pipe_to_list(row.pop("sample_centers_str",   ""))
+        row["sample_brokers"]   = pipe_to_list(row.pop("sample_brokers_str",   ""))
         if "n_experiments" in row:
             row["n_experiments"] = int(row["n_experiments"]) if pd.notna(row["n_experiments"]) else 0
         entries.append(row)

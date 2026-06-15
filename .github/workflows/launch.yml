@@ -61,10 +61,19 @@ jobs:
           # not a git repo, fail loudly here instead of falling through to fire
           # Snakemake on a stale/broken tree (the old `pull || clone && setup`
           # chain could do exactly that).
+          #
+          # Use fetch + `reset --hard @{u}` instead of `git pull`: each pipeline
+          # run regenerates tracked artefacts (data/processed/*.json, output/*),
+          # leaving the server tree dirty so a plain `pull` aborts with "local
+          # changes would be overwritten".  The server is a pure run environment
+          # — canonical artefacts are committed to main by publish.yml — so
+          # discarding its locally-regenerated copies and hard-syncing to origin
+          # is the intended behaviour.
           ssh "${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}" \
             "set -e && \
              if [ -d '${{ secrets.REMOTE_WORKDIR }}/.git' ]; then \
-               git -C '${{ secrets.REMOTE_WORKDIR }}' pull; \
+               git -C '${{ secrets.REMOTE_WORKDIR }}' fetch origin && \
+               git -C '${{ secrets.REMOTE_WORKDIR }}' reset --hard @{u}; \
              else \
                git clone https://github.com/${{ github.repository }} '${{ secrets.REMOTE_WORKDIR }}'; \
              fi && \
