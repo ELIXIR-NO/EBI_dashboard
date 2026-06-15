@@ -125,7 +125,14 @@ DOMAIN_IDENTIFIERS <- local({
   }
   # Domains plotted under a `domain` value that isn't a DOMAINS key:
   if (!is.null(m[["sra-study"]])) m[["ENA"]] <- m[["sra-study"]]  # joined studies
-  m[["ega"]] <- "ega.study"   # EGAS… (EGA samples / EGAN have no identifiers.org namespace)
+  # EGA: try the type-specific prefix first (ega.study for EGAS, ega.dataset for
+  # EGAD), then fall back to the generic `ega` namespace, which resolves any EGA
+  # accession.  make_identifier_url() links the first prefix whose pattern
+  # matches, so EGA Studies (EGAS) resolve via ega.study and EGA Samples (EGAN)
+  # via the generic ega — the same list works for both domains.
+  ega_prefixes      <- c("ega.study", "ega.dataset", "ega")
+  m[["ega"]]        <- ega_prefixes   # EGAS studies
+  m[["ega-sample"]] <- ega_prefixes   # EGAN samples (resolve via generic ega)
   m
 })
 
@@ -404,6 +411,57 @@ load_standard_domain <- function(domain) {
   bind_rows(Filter(Negate(is.null), rows))
 }
  
+#' Collapse a parsed ENA/sample tibble to one row per accession.
+#'
+#' Both the ENA Studies (ena_joined.json) and ENA Samples (sra-sample) sources
+#' are assembled from partitioned fetches whose windows can overlap, so the same
+#' accession may appear in several rows.  This guarantees each facet counts
+#' unique entities regardless of any upstream deduplication.
+#'
+#' Per-column strategy:
+#'   accession   – identity (the grouping key)
+#'   date        – earliest non-NA date (first public)
+#'   title       – first non-NA, non-empty value
+#'   country     – union of all pipe-separated values across rows
+#'   affiliation – union of all pipe-separated values across rows
+#'   email       – first non-NA
+#'   institution – majority vote across rows; ties broken by first occurrence
+#'   domain      – kept as-is (constant within an accession)
+#'   year/quarter/month – recomputed from the kept date
+collapse_pipe <- function(x) {
+  vals <- unlist(strsplit(x[!is.na(x) & nzchar(x)], " | ", fixed = TRUE))
+  paste(unique(trimws(vals[nzchar(trimws(vals))])), collapse = " | ")
+}
+
+majority <- function(x) {
+  x <- x[!is.na(x) & nzchar(x)]
+  if (length(x) == 0L) return(NA_character_)
+  names(sort(table(x), decreasing = TRUE))[1L]
+}
+
+dedupe_by_accession <- function(df) {
+  df %>%
+    group_by(accession) %>%
+    summarise(
+      domain      = first(domain),
+      title       = first(title[!is.na(title) & nzchar(title)]) %||% NA_character_,
+      affiliation = collapse_pipe(affiliation),
+      country     = collapse_pipe(country),
+      email       = first(email[!is.na(email)]) %||% NA_character_,
+      date        = suppressWarnings(min(date, na.rm = TRUE)),
+      institution = majority(institution),
+      broker      = first(broker[!is.na(broker) & nzchar(broker)]) %||% NA_character_,
+      .groups     = "drop"
+    ) %>%
+    mutate(
+      date        = if_else(is.infinite(date), as.Date(NA), date),
+      institution = if_else(is.na(institution), "Other Norway", institution),
+      year        = year(date),
+      quarter     = quarter(date),
+      month       = month(date),
+    )
+}
+
 #' Parse a joined ENA row from ena_joined.json.
 #'
 #' join_ena.py now filters for Norwegian entries post-join, so every row
@@ -448,53 +506,10 @@ load_ena <- function() {
 
   if (nrow(df) == 0L) return(df)
 
-  # ── Collapse to one row per study accession ──────────────────────────────
-  # join_ena.py already produces one row per study, but partitioned fetching
-  # can introduce duplicates (the same study appearing in multiple year
-  # windows).  This step guarantees one row per accession regardless.
-  #
-  # Per-column strategy:
-  #   accession   – identity (the grouping key)
-  #   date        – earliest non-NA date (first public)
-  #   title       – first non-NA, non-empty value
-  #   country     – union of all pipe-separated values across rows
-  #   affiliation – union of all pipe-separated values across rows
-  #   email       – first non-NA (ENA rows are always NA here)
-  #   institution – majority vote across rows; ties broken by first occurrence
-  #   domain      – always "ENA", kept as-is
-  #   year/quarter/month – recomputed from the kept date
-
-  collapse_pipe <- function(x) {
-    vals <- unlist(strsplit(x[!is.na(x) & nzchar(x)], " | ", fixed = TRUE))
-    paste(unique(trimws(vals[nzchar(trimws(vals))])), collapse = " | ")
-  }
-
-  majority <- function(x) {
-    x <- x[!is.na(x) & nzchar(x)]
-    if (length(x) == 0L) return(NA_character_)
-    names(sort(table(x), decreasing = TRUE))[1L]
-  }
-
-  df <- df %>%
-    group_by(accession) %>%
-    summarise(
-      domain      = first(domain),
-      title       = first(title[!is.na(title) & nzchar(title)]) %||% NA_character_,
-      affiliation = collapse_pipe(affiliation),
-      country     = collapse_pipe(country),
-      email       = first(email[!is.na(email)]) %||% NA_character_,
-      date        = suppressWarnings(min(date, na.rm = TRUE)),
-      institution = majority(institution),
-      broker      = first(broker[!is.na(broker) & nzchar(broker)]) %||% NA_character_,
-      .groups     = "drop"
-    ) %>%
-    mutate(
-      date        = if_else(is.infinite(date), as.Date(NA), date),
-      institution = if_else(is.na(institution), "Other Norway", institution),
-      year        = year(date),
-      quarter     = quarter(date),
-      month       = month(date),
-    )
+  # Collapse to one row per study accession.  join_ena.py already produces one
+  # row per study, but partitioned fetching can surface the same study in
+  # multiple year windows; dedupe_by_accession() guarantees uniqueness.
+  df <- dedupe_by_accession(df)
 
   message("  ENA: ", nrow(df), " unique studies after deduplication")
   df
@@ -550,7 +565,12 @@ load_sra_samples <- function() {
   entries <- raw$entries %||% list()
   rows    <- lapply(entries, parse_sra_sample)
   df      <- bind_rows(Filter(Negate(is.null), rows))
-  message("  ENA Samples: ", nrow(df), " entries")
+  if (nrow(df) == 0L) return(df)
+
+  # One row per sample accession.  sra-sample is fetched in partitioned windows
+  # that can overlap, so dedupe_by_accession() guarantees unique samples.
+  df <- dedupe_by_accession(df)
+  message("  ENA Samples: ", nrow(df), " unique samples after deduplication")
   df
 }
 

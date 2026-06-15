@@ -1,5 +1,5 @@
 {
-  "namespace_count": 8,
+  "namespace_count": 10,
   "namespaces": {
     "biomodels.db": {
       "prefix": "biomodels.db",
@@ -20,6 +20,16 @@
       "prefix": "biostudies",
       "pattern": "^S-[A-Z]{4}[\\-\\_A-Z\\d]+$",
       "name": "BioStudies database"
+    },
+    "ega": {
+      "prefix": "ega",
+      "pattern": "^EGA[SCPNRXZDBF][0-9]{11}$",
+      "name": "European Genome-phenome Archive"
+    },
+    "ega.dataset": {
+      "prefix": "ega.dataset",
+      "pattern": "^EGAD\\d{11}$",
+      "name": "European Genome-phenome Archive Dataset"
     },
     "ega.study": {
       "prefix": "ega.study",

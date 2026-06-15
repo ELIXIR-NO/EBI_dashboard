@@ -146,10 +146,8 @@ def load_institution_regexes(path=INSTITUTION_MAP) -> list[re.Pattern]:
 
 def build_geo_regex(geo_tokens: list[str]) -> re.Pattern:
     # geo_tokens are regex patterns (see load_geo_tokens), joined as a case-
-    # insensitive alternation — same as R's NORWAY_RE.  The bare country code
-    # "NO" is matched *case-sensitively* via a scoped (?-i:) group so the English
-    # word "no"/"No" in free text does not produce a false Norwegian hit.
-    parts = list(geo_tokens) + [r"(?-i:\bNO\b)"]
+    # insensitive alternation — same as R's NORWAY_RE.
+    parts = list(geo_tokens)
     return re.compile("|".join(parts), re.IGNORECASE)
 
 

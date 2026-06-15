@@ -65,10 +65,13 @@ log = logging.getLogger("fetch_identifiers")
 FIND_BY_PREFIX = ("https://registry.api.identifiers.org/restApi/namespaces"
                   "/search/findByPrefix")
 
-# Prefixes used by domains that aren't in the DOMAINS dict.  The EGA studies
-# domain (handled by fetch_ega.py) resolves to ega.study; EGA samples (EGAN…)
-# have no identifiers.org namespace, and ENA reuses sra-study's prefixes.
-EXTRA_PREFIXES = ["ega.study"]
+# Prefixes used by domains that aren't in the DOMAINS dict (EGA is handled by
+# fetch_ega.py; ENA reuses sra-study's prefixes).  The EGA accessions we plot are
+# studies (EGAS, ega.study) and samples (EGAN); EGAN has no per-type namespace,
+# but the generic `ega` namespace (pattern ^EGA[SCPNRXZDBF]\d{11}$) resolves any
+# EGA accession, so it's the catch-all.  ega.dataset (EGAD) is included for
+# completeness so dataset accessions resolve to their specific page too.
+EXTRA_PREFIXES = ["ega", "ega.dataset", "ega.study"]
 
 
 if _REQUESTS_AVAILABLE:
