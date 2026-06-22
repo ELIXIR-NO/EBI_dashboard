@@ -125,6 +125,10 @@ def load_studies() -> pd.DataFrame:
             "title":       _fv(f, "abstract") or _fv(f, "description"),
             "center_name": _fv(f, "center_project_name"),
             "description": _fv(f, "description"),
+            # The study's own first_public_date.  Used as a fallback when the
+            # experiment aggregation yields no date (e.g. all linked experiments
+            # were recovered via the link-fetch step, which carries no date).
+            "study_first_public_date": _fv(f, "first_public_date"),
             "study_text":  " ".join(filter(None, [
                 _fv(f, "abstract"), _fv(f, "description"),
                 _fv(f, "center_project_name"), _fv(f, "alias"),
@@ -319,6 +323,18 @@ def main():
 
     # ── Assemble master join ──────────────────────────────────────────────────
     df = df_studies.merge(exp_agg, on="study_acc", how="left")
+
+    # ── Coalesce the study date ───────────────────────────────────────────────
+    # Prefer the earliest experiment first_public_date, but fall back to the
+    # study's own first_public_date when the experiment aggregation supplied
+    # none (no joined experiment, or only recovered links, which carry no date).
+    # Without this, studies whose Norwegian experiments were filtered out lose
+    # their date entirely and the R render drops them via filter(!is.na(date)).
+    exp_fpd   = df["first_public_date"]
+    study_fpd = df["study_first_public_date"].fillna("")
+    has_exp_date = exp_fpd.notna() & (exp_fpd != "")
+    df["first_public_date"] = exp_fpd.where(has_exp_date, study_fpd)
+    df = df.drop(columns=["study_first_public_date"])
 
     for col in ("n_experiments",):
         if col in df.columns:
