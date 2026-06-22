@@ -81,7 +81,7 @@ DOMAIN_LABELS <- c(
   "metabolights"     = "MetaboLights",
   "pride"            = "PRIDE",
   "biomodels"        = "BioModels",
-  "ega"              = "EGA",
+  "ega"              = "EGA Studies",
   "ega-sample"       = "EGA Samples",
   "ENA"              = "ENA Studies",
   "sra-sample"       = "ENA Samples"
