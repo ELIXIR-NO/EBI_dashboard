@@ -1,6 +1,6 @@
 {
-  "join_date": "2026-06-23",
-  "study_count": 324,
+  "join_date": "2026-06-29",
+  "study_count": 327,
   "entries": [
     {
       "accession": "DRP001574",
@@ -293,20 +293,53 @@
       "sample_brokers": []
     },
     {
+      "accession": "DRP012578",
+      "title": "Fast decay of human-associated antibiotic resistance and long-term maintenance of the environmental resistome in anthropogenically-impacted aquatic ecosystems",
+      "description": "Fast decay of human-associated antibiotic resistance and long-term maintenance of the environmental resistome in anthropogenically-impacted aquatic ecosystems",
+      "center_name": "",
+      "first_public_date": "",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Germany"
+      ],
+      "sample_centers": [
+        "Universite Claude Bernard Lyon"
+      ],
+      "sample_brokers": []
+    },
+    {
       "accession": "DRP012869",
       "title": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
       "description": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
       "center_name": "",
       "first_public_date": "",
-      "n_experiments": 3,
+      "n_experiments": 1,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
-        "Atlantic Ocean",
-        "Norway"
+        "Atlantic Ocean"
       ],
       "sample_centers": [
         "RIKEN-BRC"
+      ],
+      "sample_brokers": []
+    },
+    {
+      "accession": "DRP013693",
+      "title": "A comprehensive analysis for identification of novel transcripts in JC polyomavirus",
+      "description": "A comprehensive analysis for identification of novel transcripts in JC polyomavirus",
+      "center_name": "",
+      "first_public_date": "",
+      "n_experiments": 4,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Japan"
+      ],
+      "sample_centers": [
+        "Department of Pathology, National Institute of Infectious Diseases"
       ],
       "sample_brokers": []
     },
@@ -321,6 +354,23 @@
       "domain": "sra-study",
       "sample_countries": [],
       "sample_centers": [],
+      "sample_brokers": []
+    },
+    {
+      "accession": "DRP018878",
+      "title": "RNA-seq analysis of carbon source-dependent vancomycin responses in Streptococcus pneumoniae TIGR4",
+      "description": "RNA-seq analysis of carbon source-dependent vancomycin responses in Streptococcus pneumoniae TIGR4",
+      "center_name": "",
+      "first_public_date": "",
+      "n_experiments": 6,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "The University of Osaka Graduate School of Dentistry"
+      ],
       "sample_brokers": []
     },
     {
@@ -3739,7 +3789,7 @@
       "description": "Convolutriloba macropyga, genomic and transcriptomic data",
       "center_name": "",
       "first_public_date": "",
-      "n_experiments": 2,
+      "n_experiments": 1,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -3903,7 +3953,7 @@
       "description": "Stryphnus fortis, genomic and transcriptomic data",
       "center_name": "",
       "first_public_date": "",
-      "n_experiments": 15,
+      "n_experiments": 14,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -4427,7 +4477,7 @@
       "description": "Schaudinnia rosea, genomic and transcriptomic data",
       "center_name": "",
       "first_public_date": "",
-      "n_experiments": 3,
+      "n_experiments": 2,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
