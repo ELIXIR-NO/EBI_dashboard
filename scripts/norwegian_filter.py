@@ -26,6 +26,23 @@ log = logging.getLogger("norwegian_filter")
 
 _EMAIL_NO_RE = re.compile(r"@[\w.\-]+\.no\b", re.IGNORECASE)
 
+# Non-geographic uses of "Norway" — species vernacular names (Norway spruce =
+# Picea abies, Norway rat = Rattus norvegicus, etc.).  These appear in the
+# title/abstract of studies submitted from anywhere in the world and must NOT,
+# on their own, flag an entry as a Norwegian submission.  They are stripped from
+# the text before Norwegian-signal matching, so any *other* signal (a real place
+# name, a .no email, an institution name) still qualifies the entry.
+FALSE_POSITIVE_RE = re.compile(
+    r"\bNorway\s+(?:spruce|rat|rats|maple|lobster|pout|lemming|lemmings|haddock)\b",
+    re.IGNORECASE,
+)
+
+
+def strip_false_positives(text: str) -> str:
+    """Blank out species vernaculars like 'Norway spruce' so they can't, by
+    themselves, mark an entry as Norwegian.  See FALSE_POSITIVE_RE."""
+    return FALSE_POSITIVE_RE.sub(" ", text)
+
 
 def load_web_domains(path=INSTITUTION_MAP) -> set[str]:
     """
@@ -169,7 +186,7 @@ def is_norwegian_entry(entry: dict, geo_re: re.Pattern,
             parts.extend(str(v) for v in vals if v is not None and str(v).strip())
         elif vals is not None and str(vals).strip():
             parts.append(str(vals))
-    combined = " ".join(parts)
+    combined = strip_false_positives(" ".join(parts))
     if not combined.strip():
         return False
     if geo_re.search(combined):

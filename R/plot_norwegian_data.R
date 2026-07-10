@@ -604,6 +604,21 @@ load_all_data <- function() {
     mutate(
       domain_label = DOMAIN_LABELS[domain],
       domain_label = if_else(is.na(domain_label), domain, domain_label),
+      # Norwegian-submitter flag.  For ENA studies and ENA samples the `country`
+      # field is the sample's geographic ORIGIN, not the submitter, so an entry
+      # Norwegian only via country is a "Norwegian sample, foreign submitter"
+      # case (flagged FALSE) that the dashboard can separate.  It counts as a
+      # Norwegian submitter only when a submitter/affiliation field carries the
+      # signal — i.e. a specific institution was resolved, or the affiliation /
+      # broker text itself matches NORWAY_RE.  Non-ENA domains are submissions by
+      # nature, so they are always TRUE.
+      norwegian_submitter = if_else(
+        domain %in% c("ENA", "sra-sample"),
+        institution != "Other Norway" |
+          grepl(NORWAY_RE, paste(coalesce(affiliation, ""), coalesce(broker, "")),
+                ignore.case = TRUE),
+        TRUE
+      ),
       # Entries without a broker (non-ENA domains) get a label so the
       # broker colour mode can include them with a neutral category.
       broker       = if_else(is.na(broker) | !nzchar(broker), "Non-ENA", broker),
@@ -785,7 +800,7 @@ save_plots <- function(df) {
   df %>%
     select(domain, domain_label, accession, title, date, year,
            quarter, month, institution, broker, affiliation, country, email,
-           identifier_url) %>%
+           norwegian_submitter, identifier_url) %>%
     readr::write_csv(file.path(OUT_DIR, "norwegian_entries.csv"))
  
   message("Done ✓  Files in ", OUT_DIR)
