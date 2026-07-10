@@ -125,10 +125,6 @@ def load_studies() -> pd.DataFrame:
             "title":       _fv(f, "abstract") or _fv(f, "description"),
             "center_name": _fv(f, "center_project_name"),
             "description": _fv(f, "description"),
-            # The study's own first_public_date.  Used as a fallback when the
-            # experiment aggregation yields no date (e.g. all linked experiments
-            # were recovered via the link-fetch step, which carries no date).
-            "study_first_public_date": _fv(f, "first_public_date"),
             "study_text":  " ".join(filter(None, [
                 _fv(f, "abstract"), _fv(f, "description"),
                 _fv(f, "center_project_name"), _fv(f, "alias"),
@@ -259,6 +255,70 @@ def _fetch_experiment_links(sample_accs: list[str]) -> list[dict]:
     return rows
 
 
+def _fetch_study_dates(study_accs: list[str]) -> dict[str, str]:
+    """
+    Return the earliest first_public_date per study, queried directly from
+    sra-experiment via the SRA-STUDY XREF.
+
+    sra-study carries no first_public_date of its own (the EBI Search index
+    leaves the field empty), so a study's date lives only on its experiments.
+    The experiment table is pre-filtered to Norwegian entries, so a study kept
+    on a study/sample text signal whose experiments are non-Norwegian arrives
+    with no date and is silently dropped by the R render (filter(!is.na(date))).
+    This backfill re-queries sra-experiment unfiltered for exactly those studies
+    and recovers the date.  Batched OR-queries, 50 studies each.
+
+    When a study's experiments carry different dates, the latest is kept
+    (chronological max, matching the exp_agg rule) so both paths agree.
+
+    Returns {study_acc: "YYYYMMDD"} for studies where a date was found.
+    """
+    if not _REQUESTS_AVAILABLE:
+        log.warning("requests not installed – cannot backfill study dates")
+        return {}
+
+    dates: dict[str, str] = {}
+    for i in range(0, len(study_accs), _LINK_BATCH):
+        batch = study_accs[i : i + _LINK_BATCH]
+        query = " OR ".join(f"SRA-STUDY:{acc}" for acc in batch)
+        start = 0
+        while True:
+            try:
+                resp = _requests.get(
+                    f"{_EBI_URL}/sra-experiment",
+                    params={
+                        "query":  query,
+                        "fields": "SRA-STUDY,first_public_date",
+                        "format": "json",
+                        "size":   500,
+                        "start":  start,
+                    },
+                    timeout=60,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+            except Exception as exc:
+                log.warning("    Date-backfill batch %d failed: %s", i // _LINK_BATCH, exc)
+                break
+
+            for entry in data.get("entries", []):
+                f = entry.get("fields", {})
+                sacc = _fv(f, "SRA-STUDY")
+                fpd  = _fv(f, "first_public_date")
+                if sacc and fpd:
+                    prev = dates.get(sacc)
+                    if prev is None or fpd > prev:   # keep latest (most recent)
+                        dates[sacc] = fpd
+
+            hit_count = data.get("hitCount", 0)
+            start += 500
+            if start >= hit_count or not data.get("entries"):
+                break
+            time.sleep(0.4)
+
+    return dates
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Main join
 # ──────────────────────────────────────────────────────────────────────────────
@@ -310,7 +370,10 @@ def main():
 
     exp_agg = df_exp_sample.groupby("study_acc", as_index=False).agg(
         n_experiments     = ("exp_acc",             "nunique"),
-        first_public_date = ("first_public_date",   lambda s: min((v for v in s if v), default="")),
+        # When a study's experiments carry different first_public_dates, use the
+        # latest as the study's date (most recent public activity).  Dates are
+        # YYYYMMDD compact, so lexicographic max == chronological max.
+        first_public_date = ("first_public_date",   lambda s: max((v for v in s if v), default="")),
         exp_countries     = ("exp_country",         join_unique),
         exp_centers       = ("exp_center",          join_unique),
         sample_countries  = ("sample_country",      join_unique),
@@ -323,18 +386,6 @@ def main():
 
     # ── Assemble master join ──────────────────────────────────────────────────
     df = df_studies.merge(exp_agg, on="study_acc", how="left")
-
-    # ── Coalesce the study date ───────────────────────────────────────────────
-    # Prefer the earliest experiment first_public_date, but fall back to the
-    # study's own first_public_date when the experiment aggregation supplied
-    # none (no joined experiment, or only recovered links, which carry no date).
-    # Without this, studies whose Norwegian experiments were filtered out lose
-    # their date entirely and the R render drops them via filter(!is.na(date)).
-    exp_fpd   = df["first_public_date"]
-    study_fpd = df["study_first_public_date"].fillna("")
-    has_exp_date = exp_fpd.notna() & (exp_fpd != "")
-    df["first_public_date"] = exp_fpd.where(has_exp_date, study_fpd)
-    df = df.drop(columns=["study_first_public_date"])
 
     for col in ("n_experiments",):
         if col in df.columns:
@@ -361,9 +412,30 @@ def main():
     mask = df["_text_blob"].str.contains(
         combined_re.pattern, regex=True, flags=re.IGNORECASE, na=False,
     )
-    df_nor = df[mask].drop(columns=["_text_blob"])
+    df_nor = df[mask].drop(columns=["_text_blob"]).copy()
 
     log.info("Norwegian filter: kept %d / %d studies", len(df_nor), len(df))
+
+    # ── Backfill missing study dates ──────────────────────────────────────────
+    # A study kept on a study/sample text signal whose experiments are all
+    # non-Norwegian (and thus filtered out of df_exps) has no first_public_date
+    # after the join; the R render drops those rows.  Re-query sra-experiment
+    # directly for exactly those studies to recover the date.
+    fpd = df_nor["first_public_date"] if "first_public_date" in df_nor.columns \
+        else pd.Series("", index=df_nor.index, dtype="string")
+    undated_mask = fpd.isna() | (fpd.astype("string").fillna("") == "")
+    undated = [a for a in df_nor.loc[undated_mask, "study_acc"].dropna().tolist() if a]
+    if undated:
+        log.info("  %d Norwegian studies lack a date – backfilling from sra-experiment …",
+                 len(undated))
+        date_map = _fetch_study_dates(undated)
+        if date_map:
+            backfilled = df_nor.loc[undated_mask, "study_acc"].map(date_map)
+            df_nor.loc[undated_mask, "first_public_date"] = backfilled
+            df_nor["first_public_date"] = df_nor["first_public_date"].fillna("")
+            log.info("  Backfilled dates for %d / %d studies", len(date_map), len(undated))
+        else:
+            log.info("  No dates recovered (offline or no matching experiments)")
 
     # ── Serialise ─────────────────────────────────────────────────────────────
     output_cols = {
