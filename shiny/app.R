@@ -43,6 +43,7 @@ df <- readr::read_csv(
     affiliation   = col_character(),
     country       = col_character(),
     email         = col_character(),
+    norwegian_submitter = col_logical(),
     identifier_url = col_character()
   ),
   show_col_types = FALSE
@@ -50,6 +51,10 @@ df <- readr::read_csv(
 
 # Tolerate an older CSV that predates the identifiers.org link column.
 if (!"identifier_url" %in% names(df)) df$identifier_url <- NA_character_
+# Tolerate an older CSV that predates the Norwegian-submitter flag: treat every
+# entry as a submitter (the previous behaviour) so no rows are hidden.
+if (!"norwegian_submitter" %in% names(df)) df$norwegian_submitter <- TRUE
+df$norwegian_submitter[is.na(df$norwegian_submitter)] <- TRUE
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -247,6 +252,16 @@ ui <- fluidPage(
         selected = domain_choices
       ),
 
+      radioButtons(
+        "attribution", "Attribution",
+        choices = c(
+          "All Norwegian entries"          = "all",
+          "Norwegian submitter only"       = "submitter",
+          "Norwegian sample, foreign submitter" = "sample"
+        ),
+        selected = "all"
+      ),
+
       hr(),
       # Dynamic fill-value checkboxes: rebuilt when color_by / top_n / year /
       # domain filters change.  All top-N values are pre-ticked by default.
@@ -269,13 +284,25 @@ ui <- fluidPage(
 # ── Server ────────────────────────────────────────────────────────────────────
 server <- function(input, output, session) {
 
+  # Apply the attribution filter (all / Norwegian submitter / Norwegian sample
+  # with a foreign submitter).  Shared by the plot and the entry table.
+  apply_attribution <- function(d, attribution) {
+    if (is.null(attribution)) attribution <- "all"
+    switch(attribution,
+      submitter = d |> filter(norwegian_submitter),
+      sample    = d |> filter(!norwegian_submitter),
+      d
+    )
+  }
+
   base_df <- reactive({
     req(input$year_range, input$domains)
     df |>
       filter(domain_label %in% input$domains,
              !is.na(year),
              year >= input$year_range[1],
-             year <= input$year_range[2])
+             year <= input$year_range[2]) |>
+      apply_attribution(input$attribution)
   })
 
   # Top-N fill values for the current color_by mode, domain, and year window.
@@ -326,23 +353,24 @@ server <- function(input, output, session) {
 
   output$entry_table <- DT::renderDataTable({
     req(input$year_range)
-    keep <- df |>
+    tbl_df <- df |>
       filter(domain_label %in% input$domains,
              !is.na(year),
              year >= input$year_range[1],
              year <= input$year_range[2]) |>
+      apply_attribution(input$attribution)
+    keep <- tbl_df |>
       count(domain_label, name = "total") |>
       filter(total >= input$min_domain_entries) |>
       pull(domain_label)
-    df |>
-      filter(domain_label %in% keep,
-             !is.na(year),
-             year >= input$year_range[1],
-             year <= input$year_range[2]) |>
+    tbl_df |>
+      filter(domain_label %in% keep) |>
       mutate(accession = ifelse(
         is.na(identifier_url) | !nzchar(identifier_url), accession,
         sprintf('<a href="%s" target="_blank" rel="noopener">%s</a>',
-                identifier_url, accession))) |>
+                identifier_url, accession)),
+        attribution = if_else(norwegian_submitter,
+                              "Submitter", "Sample only")) |>
       select(
         Repository  = domain_label,
         Accession   = accession,
@@ -350,13 +378,15 @@ server <- function(input, output, session) {
         Date        = date,
         Institution = institution,
         Broker      = broker,
+        Attribution = attribution,
         Email       = email
       ) |>
       arrange(desc(Date))
     # Escape every column by name except Accession, which holds the link HTML.
     # (Column names avoid the rownames-offset ambiguity of numeric indices.)
   }, options = list(pageLength = 10, scrollX = TRUE), filter = "top",
-     escape = c("Repository", "Title", "Date", "Institution", "Broker", "Email"))
+     escape = c("Repository", "Title", "Date", "Institution", "Broker",
+                "Attribution", "Email"))
 }
 
 shinyApp(ui, server)

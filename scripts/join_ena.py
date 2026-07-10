@@ -63,7 +63,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from norwegian_filter import (
     load_geo_tokens, load_institution_regexes, build_geo_regex,
-    make_combined_filter,
+    make_combined_filter, FALSE_POSITIVE_RE,
 )
 from paths import RAW_DIR, PROC_DIR
 
@@ -408,6 +408,9 @@ def main():
         .fillna("")
         .astype(str)
         .agg(" ".join, axis=1)
+        # Drop species vernaculars ("Norway spruce", "Norway rat", …) so a study
+        # is not flagged Norwegian solely because its title names such a species.
+        .str.replace(FALSE_POSITIVE_RE, " ", regex=True)
     )
     mask = df["_text_blob"].str.contains(
         combined_re.pattern, regex=True, flags=re.IGNORECASE, na=False,
