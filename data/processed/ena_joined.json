@@ -1,6 +1,6 @@
 {
-  "join_date": "2026-07-13",
-  "study_count": 284,
+  "join_date": "2026-07-20",
+  "study_count": 290,
   "entries": [
     {
       "accession": "DRP001574",
@@ -280,6 +280,23 @@
       "sample_brokers": []
     },
     {
+      "accession": "DRP012578",
+      "title": "Fast decay of human-associated antibiotic resistance and long-term maintenance of the environmental resistome in anthropogenically-impacted aquatic ecosystems",
+      "description": "Fast decay of human-associated antibiotic resistance and long-term maintenance of the environmental resistome in anthropogenically-impacted aquatic ecosystems",
+      "center_name": "",
+      "first_public_date": "20250201",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Germany"
+      ],
+      "sample_centers": [
+        "Universite Claude Bernard Lyon"
+      ],
+      "sample_brokers": []
+    },
+    {
       "accession": "DRP012867",
       "title": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
       "description": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
@@ -297,6 +314,41 @@
       "sample_brokers": []
     },
     {
+      "accession": "DRP012869",
+      "title": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
+      "description": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
+      "center_name": "",
+      "first_public_date": "20250518",
+      "n_experiments": 3,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Atlantic Ocean",
+        "Norway"
+      ],
+      "sample_centers": [
+        "RIKEN-BRC"
+      ],
+      "sample_brokers": []
+    },
+    {
+      "accession": "DRP013693",
+      "title": "A comprehensive analysis for identification of novel transcripts in JC polyomavirus",
+      "description": "A comprehensive analysis for identification of novel transcripts in JC polyomavirus",
+      "center_name": "",
+      "first_public_date": "20250808",
+      "n_experiments": 4,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Japan"
+      ],
+      "sample_centers": [
+        "Department of Pathology, National Institute of Infectious Diseases"
+      ],
+      "sample_brokers": []
+    },
+    {
       "accession": "DRP015551",
       "title": "Dual pathways of Mn oxide-driven Cr(III) release transport in serpentine topsoil: OM-Cr(III) colloids and Cr(VI) (PRJCA042476)",
       "description": "Dual pathways of Mn oxide-driven Cr(III) release transport in serpentine topsoil: OM-Cr(III) colloids and Cr(VI) (PRJCA042476)",
@@ -307,6 +359,23 @@
       "domain": "sra-study",
       "sample_countries": [],
       "sample_centers": [],
+      "sample_brokers": []
+    },
+    {
+      "accession": "DRP018878",
+      "title": "RNA-seq analysis of carbon source-dependent vancomycin responses in Streptococcus pneumoniae TIGR4",
+      "description": "RNA-seq analysis of carbon source-dependent vancomycin responses in Streptococcus pneumoniae TIGR4",
+      "center_name": "",
+      "first_public_date": "20260520",
+      "n_experiments": 6,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "The University of Osaka Graduate School of Dentistry"
+      ],
       "sample_brokers": []
     },
     {
@@ -328,7 +397,7 @@
       "description": "Core genome conservation of Staphylococcus haemolyticus limits sequence based population structure analysis",
       "center_name": "",
       "first_public_date": "20250918",
-      "n_experiments": 1,
+      "n_experiments": 2,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -1199,7 +1268,7 @@
       "description": "Comparative Genomic Analysis of Staphylococcus haemolyticus reveals keys to hospital adaptation and pathogenicity",
       "center_name": "",
       "first_public_date": "20250918",
-      "n_experiments": 1,
+      "n_experiments": 2,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -2884,7 +2953,7 @@
       "description": "Reference_genome_sequencing_collembola__diptera__and_other__mostly_small__animals",
       "center_name": "",
       "first_public_date": "20260617",
-      "n_experiments": 2,
+      "n_experiments": 8,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -2966,7 +3035,7 @@
       "description": "Population Genomics of Late Stone Age Western Eurasia",
       "center_name": "",
       "first_public_date": "20250517",
-      "n_experiments": 2,
+      "n_experiments": 1,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -3391,6 +3460,40 @@
       "domain": "sra-study",
       "sample_countries": [],
       "sample_centers": [],
+      "sample_brokers": []
+    },
+    {
+      "accession": "ERP168610",
+      "title": "Siboglinum fiordicum, genomic and transcriptomic data",
+      "description": "Siboglinum fiordicum, genomic and transcriptomic data",
+      "center_name": "",
+      "first_public_date": "20250630",
+      "n_experiments": 7,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "EarlhamInstitute"
+      ],
+      "sample_brokers": []
+    },
+    {
+      "accession": "ERP168629",
+      "title": "Stryphnus fortis, genomic and transcriptomic data",
+      "description": "Stryphnus fortis, genomic and transcriptomic data",
+      "center_name": "",
+      "first_public_date": "20250317",
+      "n_experiments": 12,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "EarlhamInstitute"
+      ],
       "sample_brokers": []
     },
     {
