@@ -1,6 +1,6 @@
 {
-  "join_date": "2026-07-20",
-  "study_count": 290,
+  "join_date": "2026-07-27",
+  "study_count": 283,
   "entries": [
     {
       "accession": "DRP001574",
@@ -280,36 +280,19 @@
       "sample_brokers": []
     },
     {
-      "accession": "DRP012578",
-      "title": "Fast decay of human-associated antibiotic resistance and long-term maintenance of the environmental resistome in anthropogenically-impacted aquatic ecosystems",
-      "description": "Fast decay of human-associated antibiotic resistance and long-term maintenance of the environmental resistome in anthropogenically-impacted aquatic ecosystems",
+      "accession": "DRP012834",
+      "title": "Ecological and evolutionary genomics of periodical cicadas",
+      "description": "Ecological and evolutionary genomics of periodical cicadas",
       "center_name": "",
-      "first_public_date": "20250201",
+      "first_public_date": "20260127",
       "n_experiments": 1,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
-        "Germany"
+        "USA"
       ],
       "sample_centers": [
-        "Universite Claude Bernard Lyon"
-      ],
-      "sample_brokers": []
-    },
-    {
-      "accession": "DRP012867",
-      "title": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
-      "description": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
-      "center_name": "",
-      "first_public_date": "20250514",
-      "n_experiments": 1,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Norway"
-      ],
-      "sample_centers": [
-        "RIKEN-BRC"
+        "Laboratory of Animal Ecology Department of Zoology Graduate School of Science, Kyoto University"
       ],
       "sample_brokers": []
     },
@@ -323,7 +306,6 @@
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
-        "Atlantic Ocean",
         "Norway"
       ],
       "sample_centers": [
@@ -367,7 +349,7 @@
       "description": "RNA-seq analysis of carbon source-dependent vancomycin responses in Streptococcus pneumoniae TIGR4",
       "center_name": "",
       "first_public_date": "20260520",
-      "n_experiments": 6,
+      "n_experiments": 3,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -389,23 +371,6 @@
       "domain": "sra-study",
       "sample_countries": [],
       "sample_centers": [],
-      "sample_brokers": []
-    },
-    {
-      "accession": "ERP000943",
-      "title": "Core genome conservation of Staphylococcus haemolyticus limits sequence based population structure analysis",
-      "description": "Core genome conservation of Staphylococcus haemolyticus limits sequence based population structure analysis",
-      "center_name": "",
-      "first_public_date": "20250918",
-      "n_experiments": 2,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Norway"
-      ],
-      "sample_centers": [
-        "SC"
-      ],
       "sample_brokers": []
     },
     {
@@ -1260,23 +1225,6 @@
       "domain": "sra-study",
       "sample_countries": [],
       "sample_centers": [],
-      "sample_brokers": []
-    },
-    {
-      "accession": "ERP114853",
-      "title": "Comparative Genomic Analysis of Staphylococcus haemolyticus reveals keys to hospital adaptation and pathogenicity",
-      "description": "Comparative Genomic Analysis of Staphylococcus haemolyticus reveals keys to hospital adaptation and pathogenicity",
-      "center_name": "",
-      "first_public_date": "20250918",
-      "n_experiments": 2,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Norway"
-      ],
-      "sample_centers": [
-        "UNIVERSITY OF TROMSO"
-      ],
       "sample_brokers": []
     },
     {
@@ -2952,8 +2900,8 @@
       "title": "Reference_genome_sequencing_collembola__diptera__and_other__mostly_small__animals",
       "description": "Reference_genome_sequencing_collembola__diptera__and_other__mostly_small__animals",
       "center_name": "",
-      "first_public_date": "20260617",
-      "n_experiments": 8,
+      "first_public_date": "20260716",
+      "n_experiments": 3,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -3027,23 +2975,6 @@
       "domain": "sra-study",
       "sample_countries": [],
       "sample_centers": [],
-      "sample_brokers": []
-    },
-    {
-      "accession": "ERP149848",
-      "title": "Population Genomics of Late Stone Age Western Eurasia",
-      "description": "Population Genomics of Late Stone Age Western Eurasia",
-      "center_name": "",
-      "first_public_date": "20250517",
-      "n_experiments": 1,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Norway"
-      ],
-      "sample_centers": [
-        "Globe Institute"
-      ],
       "sample_brokers": []
     },
     {
@@ -3468,24 +3399,7 @@
       "description": "Siboglinum fiordicum, genomic and transcriptomic data",
       "center_name": "",
       "first_public_date": "20250630",
-      "n_experiments": 7,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Norway"
-      ],
-      "sample_centers": [
-        "EarlhamInstitute"
-      ],
-      "sample_brokers": []
-    },
-    {
-      "accession": "ERP168629",
-      "title": "Stryphnus fortis, genomic and transcriptomic data",
-      "description": "Stryphnus fortis, genomic and transcriptomic data",
-      "center_name": "",
-      "first_public_date": "20250317",
-      "n_experiments": 12,
+      "n_experiments": 1,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -3944,32 +3858,6 @@
       "description": "Kelp farm biodiversity in Norway",
       "center_name": "",
       "first_public_date": "20251204",
-      "n_experiments": 0,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [],
-      "sample_centers": [],
-      "sample_brokers": []
-    },
-    {
-      "accession": "ERP186659",
-      "title": "Pneumococci causing invasive disease in Norway 2018-01-01 to 2025-08-01",
-      "description": "Pneumococci causing invasive disease in Norway 2018-01-01 to 2025-08-01",
-      "center_name": "",
-      "first_public_date": "20260309",
-      "n_experiments": 0,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [],
-      "sample_centers": [],
-      "sample_brokers": []
-    },
-    {
-      "accession": "ERP187543",
-      "title": "Pasteurella multocida in Norwegian calves",
-      "description": "Pasteurella multocida in Norwegian calves",
-      "center_name": "",
-      "first_public_date": "20260214",
       "n_experiments": 0,
       "source": "ENA",
       "domain": "sra-study",
