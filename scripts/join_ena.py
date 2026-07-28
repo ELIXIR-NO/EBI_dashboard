@@ -62,8 +62,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from norwegian_filter import (
-    load_geo_tokens, load_institution_regexes, build_geo_regex,
-    make_combined_filter, FALSE_POSITIVE_RE,
+    get_cached_combined_filter, FALSE_POSITIVE_RE,
 )
 from paths import RAW_DIR, PROC_DIR
 
@@ -324,12 +323,8 @@ def _fetch_study_dates(study_accs: list[str]) -> dict[str, str]:
 # ──────────────────────────────────────────────────────────────────────────────
 
 def main():
-    geo_tokens   = load_geo_tokens()
-    inst_regexes = load_institution_regexes()
-    geo_re       = build_geo_regex(geo_tokens)
-    combined_re  = make_combined_filter(geo_re, inst_regexes)
-    log.info("Filter: %d geo tokens, %d institution patterns",
-             len(geo_tokens), len(inst_regexes))
+    combined_re = get_cached_combined_filter()
+    log.info("Filter ready (cached)")
 
     log.info("Loading SRA sub-tables …")
     df_studies  = load_studies()

@@ -193,6 +193,20 @@ ABBREV_LU <- local({
   setNames(abbrs, cans)
 })
 
+# Pre-compute institution metadata arrays for batch normalisation (avoids extracting
+# these on every normalise_institution() call; they are static per process).
+INST_CANONICALS <- sapply(inst_map$institutions, `[[`, "canonical")
+INST_CANONICALS_NO <- sapply(inst_map$institutions,
+                             function(i) i$canonical_no %||% NA_character_)
+INST_ABBREVS <- sapply(inst_map$institutions, `[[`, "abbrev")
+
+# Pre-lowercase abbreviations for per-token Jaro-Winkler matching (branch 3).
+INST_ABBREVS_LC <- tolower(INST_ABBREVS)
+
+# Pre-lowercase both canonical names for full-string JW matching (branch 4).
+INST_CANONICALS_LC <- tolower(INST_CANONICALS)
+INST_CANONICALS_NO_LC <- tolower(INST_CANONICALS_NO)
+
 # Map a canonical institution name to its abbreviation; leave unrecognised
 # values (including "Other Norway") unchanged.  Guard the [[ ]] lookup: indexing
 # a named atomic vector with an absent name errors ("subscript out of bounds"),
@@ -260,17 +274,14 @@ normalise_institution <- function(affil_vec, email_vec = character(0)) {
     }
   }
 
-  all_canonical    <- sapply(inst_map$institutions, `[[`, "canonical")
-  all_canonical_no <- sapply(inst_map$institutions,
-                             function(i) i$canonical_no %||% NA_character_)
-  all_abbrevs      <- sapply(inst_map$institutions, `[[`, "abbrev")
+  # Pre-computed at module load; no extraction needed per call.
+  affil_lc <- tolower(affil)
 
   # 2b. Exact (case-insensitive, literal) match on the Norwegian name.
-  affil_lc <- tolower(affil)
-  for (i in seq_along(all_canonical_no)) {
-    cno <- all_canonical_no[i]
-    if (!is.na(cno) && nzchar(cno) && grepl(tolower(cno), affil_lc, fixed = TRUE)) {
-      return(all_canonical[i])
+  for (i in seq_along(INST_CANONICALS_NO_LC)) {
+    cno <- INST_CANONICALS_NO_LC[i]
+    if (!is.na(cno) && nzchar(cno) && grepl(cno, affil_lc, fixed = TRUE)) {
+      return(INST_CANONICALS[i])
     }
   }
 
@@ -278,18 +289,18 @@ normalise_institution <- function(affil_vec, email_vec = character(0)) {
   tokens <- unlist(strsplit(affil, "[,;/()\\s]+"))
   tokens <- tokens[nchar(tokens) >= 2L & nchar(tokens) <= 8L]
   for (tok in tokens) {
-    dist_abbr <- stringdist(tolower(tok), tolower(all_abbrevs), method = "jw")
+    dist_abbr <- stringdist(tolower(tok), INST_ABBREVS_LC, method = "jw")
     best <- which.min(dist_abbr)
-    if (dist_abbr[best] < 0.15) return(all_canonical[best])
+    if (dist_abbr[best] < 0.15) return(INST_CANONICALS[best])
   }
 
   # 4. Full-string JW against both English and Norwegian names; per institution
   #    take the better of the two, then return the English canonical.
-  dist_en <- stringdist(affil_lc, tolower(all_canonical),    method = "jw")
-  dist_no <- stringdist(affil_lc, tolower(all_canonical_no), method = "jw")
+  dist_en <- stringdist(affil_lc, INST_CANONICALS_LC,    method = "jw")
+  dist_no <- stringdist(affil_lc, INST_CANONICALS_NO_LC, method = "jw")
   dist_full <- pmin(dist_en, dist_no, na.rm = TRUE)
   best_full <- which.min(dist_full)
-  if (length(best_full) && dist_full[best_full] < 0.22) return(all_canonical[best_full])
+  if (length(best_full) && dist_full[best_full] < 0.22) return(INST_CANONICALS[best_full])
 
   "Other Norway"
 }
@@ -503,6 +514,9 @@ parse_ena_row <- function(row) {
     quarter     = quarter(parsed_date),
     month       = month(parsed_date),
     institution = to_abbrev(as.character(normalise_institution(affil_vals))[1L]),
+    # Raw sample centers, used for display when norwegian_submitter=FALSE (study
+    # kept on sample signal, not submitter signal). Separated by pipe for consistency.
+    sample_centers_str = paste(unlist(row$sample_centers), collapse = " | "),
     broker      = broker_val
   )
 }
@@ -627,7 +641,19 @@ load_all_data <- function() {
       identifier_url = mapply(make_identifier_url, accession, domain,
                               USE.NAMES = FALSE)
     ) %>%
-    filter(!is.na(date))
+    filter(!is.na(date)) %>%
+    # For ENA entries with norwegian_submitter=FALSE (Norwegian sample, foreign
+    # submitter), use the raw sample center names instead of the (failed)
+    # normalized institution, so users see where the samples came from.
+    mutate(
+      institution = if_else(
+        domain == "ENA" & !norwegian_submitter &
+          !is.na(sample_centers_str) & nzchar(sample_centers_str),
+        sample_centers_str,
+        institution
+      )
+    ) %>%
+    select(-sample_centers_str)  # Drop helper column after use
   df
 }
  

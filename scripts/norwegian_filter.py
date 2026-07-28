@@ -37,6 +37,13 @@ FALSE_POSITIVE_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Module-level cache: built on first call, reused thereafter
+_GEO_TOKENS_CACHE: list[str] | None = None
+_INST_REGEXES_CACHE: list[re.Pattern] | None = None
+_GEO_RE_CACHE: re.Pattern | None = None
+_COMBINED_FILTER_CACHE: re.Pattern | None = None
+_WEB_DOMAINS_CACHE: set[str] | None = None
+
 
 def strip_false_positives(text: str) -> str:
     """Blank out species vernaculars like 'Norway spruce' so they can't, by
@@ -176,8 +183,36 @@ def make_combined_filter(geo_re: re.Pattern,
     return re.compile("|".join(f"(?:{p})" for p in all_patterns), re.IGNORECASE)
 
 
-def is_norwegian_entry(entry: dict, geo_re: re.Pattern,
-                       inst_regexes: list[re.Pattern]) -> bool:
+def get_cached_combined_filter() -> re.Pattern:
+    """
+    Lazily build and cache the combined Norwegian filter (geo + institutions + email).
+    Subsequent calls return the cached version; the filter is built only once.
+    """
+    global _GEO_TOKENS_CACHE, _INST_REGEXES_CACHE, _GEO_RE_CACHE, _COMBINED_FILTER_CACHE
+    if _COMBINED_FILTER_CACHE is not None:
+        return _COMBINED_FILTER_CACHE
+    _GEO_TOKENS_CACHE = load_geo_tokens()
+    _INST_REGEXES_CACHE = load_institution_regexes()
+    _GEO_RE_CACHE = build_geo_regex(_GEO_TOKENS_CACHE)
+    _COMBINED_FILTER_CACHE = make_combined_filter(_GEO_RE_CACHE, _INST_REGEXES_CACHE)
+    log.info("Filter cached: %d geo tokens, %d institution patterns",
+             len(_GEO_TOKENS_CACHE), len(_INST_REGEXES_CACHE))
+    return _COMBINED_FILTER_CACHE
+
+
+def get_cached_web_domains() -> set[str]:
+    """
+    Lazily load and cache the set of Norwegian institution web domains.
+    Subsequent calls return the cached version; the map is loaded only once.
+    """
+    global _WEB_DOMAINS_CACHE
+    if _WEB_DOMAINS_CACHE is not None:
+        return _WEB_DOMAINS_CACHE
+    _WEB_DOMAINS_CACHE = load_web_domains()
+    return _WEB_DOMAINS_CACHE
+
+
+def is_norwegian_entry(entry: dict, combined_filter: re.Pattern) -> bool:
     """True if any field value in an EBI Search entry carries a Norwegian signal."""
     fields = entry.get("fields", {})
     parts: list[str] = []
@@ -189,9 +224,4 @@ def is_norwegian_entry(entry: dict, geo_re: re.Pattern,
     combined = strip_false_positives(" ".join(parts))
     if not combined.strip():
         return False
-    if geo_re.search(combined):
-        return True
-    for pat in inst_regexes:
-        if pat.search(combined):
-            return True
-    return bool(_EMAIL_NO_RE.search(combined))
+    return bool(combined_filter.search(combined))
