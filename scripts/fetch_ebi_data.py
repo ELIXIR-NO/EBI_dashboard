@@ -53,8 +53,7 @@ from ebi_api import (
     get_json, get_retrievable_fields, get_hit_count,
 )
 from norwegian_filter import (
-    load_geo_tokens, load_institution_regexes, build_geo_regex,
-    is_norwegian_entry,
+    get_cached_combined_filter, is_norwegian_entry,
 )
 import time
 import re
@@ -334,7 +333,7 @@ def _save_partition(domain: str, key: str, entries: list[dict],
 
 
 def _fetch_window(domain: str, fields: list[str], query: str,
-                  geo_re: re.Pattern, inst_regexes: list[re.Pattern]) -> list[dict]:
+                  combined_filter: re.Pattern) -> list[dict]:
     """Paginate through a single query window."""
     url    = f"{BASE_URL}/{domain}"
     params = {
@@ -362,7 +361,7 @@ def _fetch_window(domain: str, fields: list[str], query: str,
             entries.extend(batch)
         else:
             entries.extend(
-                e for e in batch if is_norwegian_entry(e, geo_re, inst_regexes)
+                e for e in batch if is_norwegian_entry(e, combined_filter)
             )
 
         params["start"] += PAGE_SIZE
@@ -378,8 +377,7 @@ def _fetch_window(domain: str, fields: list[str], query: str,
 # ──────────────────────────────────────────────────────────────────────────────
 
 def fetch_domain_partitioned(domain: str, cfg: dict, fields: list[str],
-                              geo_re: re.Pattern,
-                              inst_regexes: list[re.Pattern]) -> list[dict]:
+                              combined_filter: re.Pattern) -> list[dict]:
     """
     Fetch a partitioned domain with incremental caching.
 
@@ -480,8 +478,7 @@ def fetch_domain_partitioned(domain: str, cfg: dict, fields: list[str],
         # < (not <=): a window reporting exactly the cap may hold more than it
         # reports, so only paginate directly when strictly below the cap.
         if count < MAX_PAGEABLE:
-            entries = _fetch_window(domain, fields, window_query,
-                                    geo_re, inst_regexes)
+            entries = _fetch_window(domain, fields, window_query, combined_filter)
             _save_partition(domain, key, entries, manifest)
             log.info("%s→ fetched %d entries", indent + "  ", len(entries))
             time.sleep(RATE_SLEEP)
@@ -496,8 +493,7 @@ def fetch_domain_partitioned(domain: str, cfg: dict, fields: list[str],
                 "some entries will be missed.",
                 indent, domain, d_start, count, MAX_PAGEABLE, MAX_PAGEABLE,
             )
-            entries = _fetch_window(domain, fields, window_query,
-                                    geo_re, inst_regexes)
+            entries = _fetch_window(domain, fields, window_query, combined_filter)
             _save_partition(domain, key, entries, manifest)
             time.sleep(RATE_SLEEP)
             return entries
@@ -548,7 +544,7 @@ def fetch_domain_partitioned(domain: str, cfg: dict, fields: list[str],
 # ──────────────────────────────────────────────────────────────────────────────
 
 def fetch_domain(domain: str, cfg: dict, fields: list[str],
-                 geo_re: re.Pattern, inst_regexes: list[re.Pattern]) -> list[dict]:
+                 combined_filter: re.Pattern) -> list[dict]:
     """
     Fetch all entries for a domain.
 
@@ -564,7 +560,7 @@ def fetch_domain(domain: str, cfg: dict, fields: list[str],
         if hit_count >= MAX_PAGEABLE:
             log.info("  %s at/above MAX_PAGEABLE – using incremental partitioned fetch",
                      domain)
-            return fetch_domain_partitioned(domain, cfg, fields, geo_re, inst_regexes)
+            return fetch_domain_partitioned(domain, cfg, fields, combined_filter)
 
     # Standard single-pass pagination for small domains
     url    = f"{BASE_URL}/{domain}"
@@ -599,7 +595,7 @@ def fetch_domain(domain: str, cfg: dict, fields: list[str],
             entries.extend(batch)
         else:
             entries.extend(
-                e for e in batch if is_norwegian_entry(e, geo_re, inst_regexes)
+                e for e in batch if is_norwegian_entry(e, combined_filter)
             )
 
         params["start"] += PAGE_SIZE
@@ -667,29 +663,21 @@ def save_domains_json(path: Path = DOMAINS_JSON) -> None:
 # Per-domain orchestration  (single source of truth for one domain's fetch)
 # ──────────────────────────────────────────────────────────────────────────────
 
-def fetch_and_save_domain(domain: str,
-                          geo_re: re.Pattern | None = None,
-                          inst_regexes: list[re.Pattern] | None = None) -> int:
+def fetch_and_save_domain(domain: str) -> int:
     """
     Fetch + filter + save a single domain.  Used by fetch_one_domain.py (one
     domain per Snakemake job) and by main()'s local in-process loop.
 
-    The Norwegian filter is built on demand; callers running many domains can
-    pass a prebuilt geo_re / inst_regexes to avoid recompiling per domain.
+    The Norwegian filter is lazily built on first call and cached for reuse
+    across all domains in the process.
     Returns the number of entries saved.
     """
     cfg = DOMAINS[domain]
-
-    if geo_re is None or inst_regexes is None:
-        geo_tokens   = load_geo_tokens()
-        inst_regexes = load_institution_regexes()
-        geo_re       = build_geo_regex(geo_tokens)
-        log.info("Filter ready: %d geo tokens, %d institution patterns",
-                 len(geo_tokens), len(inst_regexes))
+    combined_filter = get_cached_combined_filter()
 
     log.info("=== fetch_and_save_domain: %s ===", domain)
     fields  = get_retrievable_fields(domain, cfg)
-    entries = fetch_domain(domain, cfg, fields, geo_re, inst_regexes)
+    entries = fetch_domain(domain, cfg, fields, combined_filter)
     save_domain(domain, entries, fields)
 
     # Partition checkpoint summary (files are retained so a re-run resumes)
@@ -725,18 +713,13 @@ def main():
     except Exception as exc:
         log.error("fetch_identifiers failed: %s", exc)
 
-    # Build the Norwegian filter once and reuse it across all domains.
-    geo_tokens   = load_geo_tokens()
-    inst_regexes = load_institution_regexes()
-    geo_re       = build_geo_regex(geo_tokens)
-    log.info("Filter ready: %d geo tokens, %d institution patterns",
-             len(geo_tokens), len(inst_regexes))
-
+    # The Norwegian filter is lazily built on the first domain fetch and cached
+    # for reuse across all domains.
     failed: list[str] = []
     for domain in DOMAINS:
         log.info("─── Domain: %s ───", domain)
         try:
-            fetch_and_save_domain(domain, geo_re, inst_regexes)
+            fetch_and_save_domain(domain)
         except Exception as exc:
             log.error("fetch_and_save_domain failed for %s: %s", domain, exc)
             failed.append(domain)
