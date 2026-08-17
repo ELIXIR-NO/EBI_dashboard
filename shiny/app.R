@@ -276,6 +276,8 @@ ui <- fluidPage(
       width = 9,
       plotOutput("main_plot", height = "700px"),
       hr(),
+      downloadButton("download_csv", "Download table as CSV"),
+      br(), br(),
       DT::dataTableOutput("entry_table")
     )
   )
@@ -351,7 +353,8 @@ server <- function(input, output, session) {
     )
   }, res = 120)
 
-  output$entry_table <- DT::renderDataTable({
+  # Rows currently shown in the table, shared by the DT view and CSV download.
+  table_df <- reactive({
     req(input$year_range)
     tbl_df <- df |>
       filter(domain_label %in% input$domains,
@@ -365,15 +368,12 @@ server <- function(input, output, session) {
       pull(domain_label)
     tbl_df |>
       filter(domain_label %in% keep) |>
-      mutate(accession = ifelse(
-        is.na(identifier_url) | !nzchar(identifier_url), accession,
-        sprintf('<a href="%s" target="_blank" rel="noopener">%s</a>',
-                identifier_url, accession)),
-        attribution = if_else(norwegian_submitter,
-                              "Submitter", "Sample only")) |>
+      mutate(attribution = if_else(norwegian_submitter,
+                                   "Submitter", "Sample only")) |>
       select(
         Repository  = domain_label,
         Accession   = accession,
+        identifier_url,
         Title       = title,
         Date        = date,
         Institution = institution,
@@ -382,11 +382,27 @@ server <- function(input, output, session) {
         Email       = email
       ) |>
       arrange(desc(Date))
+  })
+
+  output$entry_table <- DT::renderDataTable({
+    table_df() |>
+      mutate(Accession = ifelse(
+        is.na(identifier_url) | !nzchar(identifier_url), Accession,
+        sprintf('<a href="%s" target="_blank" rel="noopener">%s</a>',
+                identifier_url, Accession))) |>
+      select(-identifier_url)
     # Escape every column by name except Accession, which holds the link HTML.
     # (Column names avoid the rownames-offset ambiguity of numeric indices.)
   }, options = list(pageLength = 10, scrollX = TRUE), filter = "top",
      escape = c("Repository", "Title", "Date", "Institution", "Broker",
                 "Attribution", "Email"))
+
+  output$download_csv <- downloadHandler(
+    filename = function() paste0("norwegian_entries_", Sys.Date(), ".csv"),
+    content = function(file) {
+      readr::write_csv(table_df() |> select(-identifier_url), file)
+    }
+  )
 }
 
 shinyApp(ui, server)

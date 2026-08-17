@@ -172,7 +172,10 @@ build_pattern_df <- function(inst_list) {
 }
 
 PATTERN_DF <- build_pattern_df(inst_map$institutions)
-NORWAY_RE  <- paste(inst_map$norway_indicators, collapse = "|")
+# Each indicator is wrapped in \b...\b so a bare place name like "Bergen" only
+# matches as a whole word, not as a substring of an unrelated word (e.g. the
+# plant genus "Bergenia").  Kept in sync with Python's build_geo_regex().
+NORWAY_RE  <- paste(paste0("\\b", inst_map$norway_indicators, "\\b"), collapse = "|")
 
 # Email-domain → canonical lookup built once from web_domain fields.
 # Keys are base domains (e.g. "uio.no"); matching also handles sub-domains.
@@ -253,8 +256,14 @@ parse_ebi_date <- function(x) {
 #' literal match (2b) and the fuzzy fallback (4); either way the English
 #' `canonical` name is returned so the display value stays consistent.
 #'
+#' `context_vec` (e.g. the record's own `country` field) is appended only for
+#' satisfying `(?=.*Norway|.*Norsk)` context guards on otherwise-ambiguous
+#' patterns (see e.g. "Veterinary Institute"); it is never part of `affil`
+#' itself, so it can't skew the fuzzy-match branches below.
+#'
 #' Returns the canonical institution name, or "Other Norway" if nothing matches.
-normalise_institution <- function(affil_vec, email_vec = character(0)) {
+normalise_institution <- function(affil_vec, email_vec = character(0),
+                                  context_vec = character(0)) {
 
   # 1. Email domain lookup — highest confidence, very few false positives.
   valid_emails <- email_vec[!is.na(email_vec) & nzchar(email_vec)]
@@ -265,11 +274,12 @@ normalise_institution <- function(affil_vec, email_vec = character(0)) {
     }
   }
 
-  # 2. Regex pattern matching on affiliation text.
+  # 2. Regex pattern matching on affiliation text (+ context, for guards only).
   affil <- paste(affil_vec[!is.na(affil_vec)], collapse = " ")
   if (!nzchar(trimws(affil))) return("Other Norway")
+  match_text <- paste(affil, paste(context_vec[!is.na(context_vec)], collapse = " "))
   for (i in seq_len(nrow(PATTERN_DF))) {
-    if (grepl(PATTERN_DF$pattern[i], affil, ignore.case = TRUE, perl = TRUE)) {
+    if (grepl(PATTERN_DF$pattern[i], match_text, ignore.case = TRUE, perl = TRUE)) {
       return(PATTERN_DF$canonical[i])
     }
   }
@@ -404,7 +414,9 @@ parse_entry <- function(entry, domain) {
     year        = year(parsed_date),
     quarter     = quarter(parsed_date),
     month       = month(parsed_date),
-    institution = to_abbrev(as.character(normalise_institution(affil_vals, email_vec = email_vals))[1L]),
+    institution = to_abbrev(as.character(normalise_institution(
+      affil_vals, email_vec = email_vals, context_vec = country_vals
+    ))[1L]),
     broker      = NA_character_
   )
 }
@@ -513,7 +525,9 @@ parse_ena_row <- function(row) {
     year        = year(parsed_date),
     quarter     = quarter(parsed_date),
     month       = month(parsed_date),
-    institution = to_abbrev(as.character(normalise_institution(affil_vals))[1L]),
+    institution = to_abbrev(as.character(normalise_institution(
+      affil_vals, context_vec = country_vals
+    ))[1L]),
     # Raw sample centers, used for display when norwegian_submitter=FALSE (study
     # kept on sample signal, not submitter signal). Separated by pipe for consistency.
     sample_centers_str = paste(unlist(row$sample_centers), collapse = " | "),
@@ -577,7 +591,9 @@ parse_sra_sample <- function(entry) {
     year        = year(parsed_date),
     quarter     = quarter(parsed_date),
     month       = month(parsed_date),
-    institution = to_abbrev(as.character(normalise_institution(affil_vals))[1L]),
+    institution = to_abbrev(as.character(normalise_institution(
+      affil_vals, context_vec = country_val
+    ))[1L]),
     # broker_name first, center_name as fallback.  Note: `%||%` only coalesces
     # NULL/empty, not NA — and pick_field() returns NA_character_ when a field is
     # absent, so chaining `broker_name %||% center_name` would keep the NA and
