@@ -135,9 +135,17 @@ def _institution_name_patterns(inst: dict) -> list[str]:
 
     Escaping + \\b boundaries keep these literal (no accidental regex meaning,
     and "UiB" won't match inside another word).
+
+    `abbrev` is deliberately excluded here: short institution codes (e.g. "IMR",
+    "Nord") collide with unrelated words/acronyms (the IMR-90 cell line, the
+    English word "Nord" in other org names) far more often than full names do.
+    Curators add a bare \\babbrev\\b pattern to `patterns` explicitly when it's
+    judged safe, and add a `(?=.*Norway|.*Norsk)` context guard when it isn't
+    (see e.g. HI, VI, NR, NCR below) — auto-generating an unguarded fallback
+    here would silently bypass that judgement call.
     """
     out: list[str] = []
-    for key in ("canonical", "canonical_no", "abbrev"):
+    for key in ("canonical", "canonical_no"):
         v = inst.get(key)
         if isinstance(v, str) and v.strip():
             out.append(r"\b" + re.escape(v.strip()) + r"\b")
@@ -170,8 +178,11 @@ def load_institution_regexes(path=INSTITUTION_MAP) -> list[re.Pattern]:
 
 def build_geo_regex(geo_tokens: list[str]) -> re.Pattern:
     # geo_tokens are regex patterns (see load_geo_tokens), joined as a case-
-    # insensitive alternation — same as R's NORWAY_RE.
-    parts = list(geo_tokens)
+    # insensitive alternation — same as R's NORWAY_RE.  Each token is wrapped in
+    # \b...\b so a plain place name like "Bergen" only matches as a whole word
+    # and not as a substring of an unrelated word (e.g. the plant genus
+    # "Bergenia", or "Bodoe" inside a longer identifier).
+    parts = [rf"\b{t}\b" for t in geo_tokens]
     return re.compile("|".join(parts), re.IGNORECASE)
 
 

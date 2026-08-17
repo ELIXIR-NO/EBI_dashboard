@@ -260,7 +260,7 @@
       "patterns": [
         "Institute of Marine Research",
         "Havforskningsinstituttet",
-        "\\bIMR\\b",
+        "\\bIMR\\b(?=.*[Nn]orway|.*[Nn]orsk)",
         "\\bHI\\b(?=.*[Nn]orway|.*[Nn]orsk)"
       ]
     },
@@ -338,7 +338,7 @@
       ]
     },
     {
-      "canonical": "Veterinary Institute",
+      "canonical": "Norwegian Veterinary Institute",
       "canonical_no": "Veterinærinstituttet",
       "abbrev": "VI",
       "ror": "https://ror.org/05m6y3182",
@@ -346,6 +346,7 @@
       "patterns": [
         "Veterin[æa]rinstituttet",
         "Norwegian Veterinary Institute",
+        "\\bVeterinary Institute\\b(?=.*[Nn]orway|.*[Nn]orsk)",
         "\\bVI\\b(?=.*[Nn]orway|.*[Nn]orsk)"
       ]
     },
