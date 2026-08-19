@@ -62,7 +62,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from norwegian_filter import (
-    get_cached_combined_filter, FALSE_POSITIVE_RE,
+    get_cached_filter_tiers, FALSE_POSITIVE_RE,
 )
 from paths import RAW_DIR, PROC_DIR
 
@@ -111,6 +111,33 @@ def iter_entries(domain: str) -> Iterator[dict]:
         yield entry
 
 
+# Column schemas for the frames built by rows_to_df() below.  Each is the
+# single source of truth for its table: rows_to_df() asserts the row dicts
+# match it, and it doubles as the fallback schema when zero rows are loaded
+# (pd.DataFrame([]) would otherwise produce a 0-column frame, breaking the
+# join-key merges/groupbys downstream).
+STUDY_COLUMNS = ["study_acc", "title", "center_name", "description", "study_text"]
+EXP_COLUMNS = [
+    "exp_acc", "study_acc", "sample_acc", "first_public_date",
+    "exp_country", "exp_center", "exp_text",
+]
+SAMPLE_COLUMNS = [
+    "sample_acc", "sample_country", "sample_center", "sample_broker",
+    "sample_region", "sample_text",
+]
+
+
+def rows_to_df(rows: list[dict], columns: list[str]) -> pd.DataFrame:
+    """Build a schema-stable DataFrame from a list of same-shaped dicts."""
+    if not rows:
+        return pd.DataFrame(columns=columns, dtype="string")
+    df = pd.DataFrame(rows, dtype="string")
+    assert set(df.columns) == set(columns), (
+        f"row dict keys {sorted(df.columns)} != declared columns {sorted(columns)}"
+    )
+    return df
+
+
 def load_studies() -> pd.DataFrame:
     """
     Load all sra-study entries (unfiltered).  Norwegian filter is applied post-join
@@ -130,7 +157,7 @@ def load_studies() -> pd.DataFrame:
                 _fv(f, "study_keywords"), _fv(f, "study_type"),
             ])),
         })
-    df = pd.DataFrame(rows, dtype="string")
+    df = rows_to_df(rows, STUDY_COLUMNS)
     log.info("  sra-study:      %d rows loaded", len(df))
     return df
 
@@ -158,7 +185,7 @@ def load_experiments() -> pd.DataFrame:
                 _fv(f, "region"),
             ])),
         })
-    df = pd.DataFrame(rows, dtype="string")
+    df = rows_to_df(rows, EXP_COLUMNS)
     log.info("  sra-experiment: %d rows loaded", len(df))
     return df
 
@@ -182,7 +209,7 @@ def load_samples() -> pd.DataFrame:
                 _fv(f, "description"),
             ])),
         })
-    df = pd.DataFrame(rows, dtype="string")
+    df = rows_to_df(rows, SAMPLE_COLUMNS)
     log.info("  sra-sample:     %d rows loaded", len(df))
     return df
 
@@ -199,11 +226,16 @@ def _fetch_experiment_links(sample_accs: list[str]) -> list[dict]:
     """
     For Norwegian samples not covered by any experiment in df_exps (i.e. their
     experiment was filtered out because it has no Norwegian center/country),
-    fetch the minimal (exp_acc, study_acc, sample_acc) link rows directly from
-    the sra-experiment API using SAMPLE XREF queries.
+    fetch the (exp_acc, study_acc, sample_acc) link rows plus their
+    country/center_name signal directly from the sra-experiment API using
+    SAMPLE XREF queries.
 
-    Returns a list of bare link rows (no Norwegian-signal fields populated)
-    suitable for appending to df_exps before the join aggregation.
+    country/center_name are fetched (not left blank) so a study recovered
+    only through this path still carries an experiment-level Norwegian signal
+    and isn't silently dropped by the filter a few steps later.
+
+    Returns a list of link rows suitable for appending to df_exps before the
+    join aggregation.
     """
     if not _REQUESTS_AVAILABLE:
         log.warning("requests not installed – cannot recover uncovered sample links")
@@ -220,7 +252,7 @@ def _fetch_experiment_links(sample_accs: list[str]) -> list[dict]:
                     f"{_EBI_URL}/sra-experiment",
                     params={
                         "query":  query,
-                        "fields": "acc,SRA-STUDY,SAMPLE,SRA-SAMPLE",
+                        "fields": "acc,SRA-STUDY,SAMPLE,SRA-SAMPLE,country,center_name",
                         "format": "json",
                         "size":   500,
                         "start":  start,
@@ -235,14 +267,16 @@ def _fetch_experiment_links(sample_accs: list[str]) -> list[dict]:
 
             for entry in data.get("entries", []):
                 f = entry.get("fields", {})
+                exp_country = _fv(f, "country")
+                exp_center  = _fv(f, "center_name")
                 rows.append({
-                    "exp_acc":           entry.get("id", ""),
+                    "exp_acc":           entry.get("id", "") or _fv(f, "acc"),
                     "study_acc":         _fv(f, "SRA-STUDY"),
                     "sample_acc":        _fv(f, "SAMPLE") or _fv(f, "SRA-SAMPLE"),
                     "first_public_date": "",
-                    "exp_country":       "",
-                    "exp_center":        "",
-                    "exp_text":          "",
+                    "exp_country":       exp_country,
+                    "exp_center":        exp_center,
+                    "exp_text":          " ".join(filter(None, [exp_country, exp_center])),
                 })
 
             hit_count = data.get("hitCount", 0)
@@ -323,13 +357,30 @@ def _fetch_study_dates(study_accs: list[str]) -> dict[str, str]:
 # ──────────────────────────────────────────────────────────────────────────────
 
 def main():
-    combined_re = get_cached_combined_filter()
+    safe_filter, abbrev_filter = get_cached_filter_tiers()
     log.info("Filter ready (cached)")
 
     log.info("Loading SRA sub-tables …")
     df_studies  = load_studies()
     df_exps     = load_experiments()
     df_samples  = load_samples()
+
+    # All three tables are cumulative (not just "new since last run"), so a
+    # healthy fetch should never come back with zero rows.  0 rows almost
+    # always means an upstream EBI Search outage or fetch bug rather than a
+    # genuine "no data" state.  Abort without writing output rather than
+    # silently overwriting the last known-good ena_joined.json (the file the
+    # dashboard renders from) with degraded or empty results.
+    for name, table in (
+        ("sra-study", df_studies), ("sra-experiment", df_exps), ("sra-sample", df_samples),
+    ):
+        if table.empty:
+            log.error(
+                "  %s: 0 rows loaded – aborting without writing output "
+                "(likely an upstream fetch failure; leaving existing %s in place)",
+                name, PROC_DIR / "ena_joined.json",
+            )
+            sys.exit(1)
 
     # ── Recover Norwegian samples whose experiment was filtered out ────────────
     # sra-experiment is pre-filtered for Norwegian entries, so samples linked
@@ -346,7 +397,7 @@ def main():
                  len(uncovered))
         link_rows = _fetch_experiment_links(uncovered)
         if link_rows:
-            df_links = pd.DataFrame(link_rows, dtype="string")
+            df_links = rows_to_df(link_rows, EXP_COLUMNS)
             df_exps = pd.concat([df_exps, df_links], ignore_index=True).drop_duplicates(
                 subset=["exp_acc"]
             )
@@ -389,28 +440,49 @@ def main():
     log.info("Master join: %d studies × %d columns", len(df), len(df.columns))
 
     # ── Norwegian filter ──────────────────────────────────────────────────────
-    signal_cols = [
-        "study_text",
-        "exp_text_blob",
+    # Split signal columns the same way is_norwegian_entry() splits raw fields:
+    # identity columns (exp_countries/exp_centers/sample_*) reliably name an
+    # institution or its country, so bare-abbreviation patterns (abbrev_filter)
+    # are trusted there.  The free-text blobs (study_text, exp_text_blob,
+    # sample_text_blob) are built from abstract/description/alias/study_keywords
+    # etc. — specimen/strain-code-prone fields (see SPECIMEN_LIKE_FIELDS) where a
+    # bare abbreviation match is unreliable — so only safe_filter (geo names,
+    # full institution names, guarded abbreviations, .no email) is checked there.
+    identity_cols = [
+        "center_name",
         "exp_countries", "exp_centers",
         "sample_countries", "sample_centers", "sample_brokers", "sample_regions",
-        "sample_text_blob",
     ]
-    signal_cols = [c for c in signal_cols if c in df.columns]
+    text_cols = ["study_text", "exp_text_blob", "sample_text_blob"]
+    identity_cols = [c for c in identity_cols if c in df.columns]
+    text_cols = [c for c in text_cols if c in df.columns]
 
-    df["_text_blob"] = (
-        df[signal_cols]
-        .fillna("")
-        .astype(str)
-        .agg(" ".join, axis=1)
-        # Drop species vernaculars ("Norway spruce", "Norway rat", …) so a study
-        # is not flagged Norwegian solely because its title names such a species.
-        .str.replace(FALSE_POSITIVE_RE, " ", regex=True)
+    # Column-wise concatenation rather than a row-wise .agg(" ".join, axis=1):
+    # the latter degrades to returning a DataFrame instead of a Series when df
+    # has 0 rows (e.g. sra-study fetch came back empty), breaking the
+    # .str.replace() below.  Plain object dtype (not "string") avoids a
+    # per-iteration StringDtype coercion that roughly doubles the cost of
+    # this loop at the ~730K-row scale sra-study can reach.
+    def _concat_cols(cols: list[str]) -> pd.Series:
+        blob = pd.Series("", index=df.index, dtype=object)
+        for i, col in enumerate(cols):
+            sep = " " if i else ""
+            blob = blob + sep + df[col].fillna("").astype(str)
+        return blob
+
+    # Drop species vernaculars ("Norway spruce", "Norway rat", …) so a study
+    # is not flagged Norwegian solely because its title names such a species.
+    all_blob = _concat_cols(identity_cols + text_cols).str.replace(
+        FALSE_POSITIVE_RE, " ", regex=True
     )
-    mask = df["_text_blob"].str.contains(
-        combined_re.pattern, regex=True, flags=re.IGNORECASE, na=False,
+    identity_blob = _concat_cols(identity_cols).str.replace(
+        FALSE_POSITIVE_RE, " ", regex=True
     )
-    df_nor = df[mask].drop(columns=["_text_blob"]).copy()
+    mask = (
+        all_blob.str.contains(safe_filter.pattern, regex=True, flags=re.IGNORECASE, na=False)
+        | identity_blob.str.contains(abbrev_filter.pattern, regex=True, flags=re.IGNORECASE, na=False)
+    )
+    df_nor = df[mask].copy()
 
     log.info("Norwegian filter: kept %d / %d studies", len(df_nor), len(df))
 

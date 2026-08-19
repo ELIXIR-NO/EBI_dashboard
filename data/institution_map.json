@@ -54,6 +54,7 @@
         "Norges arktiske",
         "University of Troms[ø o]",
         "Universitetet [io] Troms[ø o]",
+        "Troms[øo]e?\\s+University\\s+Museum",
         "\\bUiT\\b",
         "\\bUIT\\b"
       ]
@@ -225,6 +226,43 @@
         "Akershus [Uu]niversitetssykehus",
         "\\bAhus\\b",
         "\\bAHUS\\b"
+      ]
+    },
+    {
+      "canonical": "Stavanger University Hospital",
+      "canonical_no": "Stavanger universitetssjukehus",
+      "abbrev": "SUS",
+      "ror": "https://ror.org/04zn72g03",
+      "web_domain": "sus.no",
+      "patterns": [
+        "Stavanger University Hospital",
+        "Stavanger [Uu]niversitetssjukehus",
+        "Helse Stavanger",
+        "\\bSUS\\b(?=.*[Nn]orway|.*[Nn]orsk)"
+      ]
+    },
+    {
+      "canonical": "Vestfold Hospital Trust",
+      "canonical_no": "Sykehuset i Vestfold",
+      "abbrev": "SiV",
+      "ror": "https://ror.org/04a0aep16",
+      "web_domain": "siv.no",
+      "patterns": [
+        "Vestfold Hospital Trust",
+        "Sykehuset [io] Vestfold",
+        "\\bSiV\\b(?=.*[Nn]orway|.*[Nn]orsk)"
+      ]
+    },
+    {
+      "canonical": "Norwegian Defence Research Establishment",
+      "canonical_no": "Forsvarets forskningsinstitutt",
+      "abbrev": "FFI",
+      "ror": "https://ror.org/0098gnz32",
+      "web_domain": "ffi.no",
+      "patterns": [
+        "Norwegian Defence Research Establishment",
+        "Forsvarets forskningsinstitutt",
+        "\\bFFI\\b(?=.*[Nn]orway|.*[Nn]orsk)"
       ]
     },
     {

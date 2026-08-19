@@ -37,11 +37,31 @@ FALSE_POSITIVE_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Fields that carry specimen/strain/taxonomic codes and other free descriptive
+# text, rather than the identity of a submitting institution or person.  Bare
+# institution abbreviations (e.g. "OUS", "HUS", "INN", "USN") collide with
+# unrelated codes in these fields far more often than in fields that
+# structurally name an institution or submitter (center_name, broker_name,
+# submitter, author, affiliation, ...).  Confirmed collisions: a Japanese
+# shrew specimen "Suncus murinus Ous:KAT-227c" (OUS = Oslo University
+# Hospital), a Finnish sample described "HUS-41-79" (HUS = Haukeland
+# University Hospital), fungal isolates "USN-sp 20" (USN = Univ. of
+# South-Eastern Norway) — none have any connection to Norway.
+# See is_norwegian_entry(), which matches bare abbreviations only outside
+# these fields.
+SPECIMEN_LIKE_FIELDS = frozenset({
+    "description", "abstract", "name", "title", "alias", "tag",
+    "scientific_name", "strain", "sub_species", "isolate", "classification",
+    "host", "study_keywords", "study_type", "legend", "image_name",
+    "figure_sub", "figure_type", "method", "collection",
+})
+
 # Module-level cache: built on first call, reused thereafter
 _GEO_TOKENS_CACHE: list[str] | None = None
 _INST_REGEXES_CACHE: list[re.Pattern] | None = None
+_ABBREV_REGEXES_CACHE: list[re.Pattern] | None = None
 _GEO_RE_CACHE: re.Pattern | None = None
-_COMBINED_FILTER_CACHE: re.Pattern | None = None
+_FILTER_TIERS_CACHE: tuple[re.Pattern, re.Pattern] | None = None
 _WEB_DOMAINS_CACHE: set[str] | None = None
 
 
@@ -157,23 +177,54 @@ def _institution_name_patterns(inst: dict) -> list[str]:
     return out
 
 
-def load_institution_regexes(path=INSTITUTION_MAP) -> list[re.Pattern]:
+def _is_bare_abbrev_pattern(pattern: str, abbrev: str | None) -> bool:
+    """
+    True if `pattern` is exactly \\b<abbrev>\\b with no lookahead context guard
+    — the collision-prone shape curators use for a short institution code that
+    hasn't been given a `(?=.*Norway|.*Norsk)` guard.  Guarded abbreviation
+    patterns (e.g. "\\bVI\\b(?=.*Norway)") are NOT bare, and are treated as
+    safe like any other curated pattern.
+    """
+    if not abbrev:
+        return False
+    return pattern.strip().lower() == rf"\b{re.escape(abbrev.strip())}\b".lower()
+
+
+def load_institution_regexes(path=INSTITUTION_MAP) -> tuple[list[re.Pattern], list[re.Pattern]]:
+    """
+    Returns (safe_regexes, abbrev_regexes):
+
+      safe_regexes   Full institution names, ROR ids, and any curated pattern
+                     that already carries a context guard.  Safe to match
+                     against any field, including specimen/description text.
+      abbrev_regexes Bare, unguarded abbreviation patterns (e.g. "\\bOUS\\b").
+                     Only safe to match against identity-bearing fields — see
+                     SPECIMEN_LIKE_FIELDS and is_norwegian_entry().
+    """
     try:
         with open(path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
     except FileNotFoundError:
         log.warning("Institution map not found: %s – institution filter disabled", path)
-        return []
-    compiled: list[re.Pattern] = []
+        return [], []
+    safe: list[re.Pattern] = []
+    abbrev: list[re.Pattern] = []
     for inst in data.get("institutions", []):
+        ab = inst.get("abbrev")
         # Curated regex patterns first, then literal name/abbrev/ROR fallbacks.
         for p in list(inst.get("patterns", [])) + _institution_name_patterns(inst):
             try:
-                compiled.append(re.compile(p, re.IGNORECASE))
+                compiled = re.compile(p, re.IGNORECASE)
             except re.error as exc:
                 log.debug("Skipping invalid pattern %r: %s", p, exc)
-    log.info("Loaded %d institution regex patterns", len(compiled))
-    return compiled
+                continue
+            if _is_bare_abbrev_pattern(p, ab):
+                abbrev.append(compiled)
+            else:
+                safe.append(compiled)
+    log.info("Loaded %d safe + %d bare-abbreviation institution patterns",
+             len(safe), len(abbrev))
+    return safe, abbrev
 
 
 def build_geo_regex(geo_tokens: list[str]) -> re.Pattern:
@@ -194,21 +245,41 @@ def make_combined_filter(geo_re: re.Pattern,
     return re.compile("|".join(f"(?:{p})" for p in all_patterns), re.IGNORECASE)
 
 
-def get_cached_combined_filter() -> re.Pattern:
-    """
-    Lazily build and cache the combined Norwegian filter (geo + institutions + email).
-    Subsequent calls return the cached version; the filter is built only once.
-    """
-    global _GEO_TOKENS_CACHE, _INST_REGEXES_CACHE, _GEO_RE_CACHE, _COMBINED_FILTER_CACHE
-    if _COMBINED_FILTER_CACHE is not None:
-        return _COMBINED_FILTER_CACHE
+def _ensure_filter_caches_built() -> None:
+    global _GEO_TOKENS_CACHE, _INST_REGEXES_CACHE, _ABBREV_REGEXES_CACHE, _GEO_RE_CACHE
+    if _GEO_RE_CACHE is not None:
+        return
     _GEO_TOKENS_CACHE = load_geo_tokens()
-    _INST_REGEXES_CACHE = load_institution_regexes()
+    _INST_REGEXES_CACHE, _ABBREV_REGEXES_CACHE = load_institution_regexes()
     _GEO_RE_CACHE = build_geo_regex(_GEO_TOKENS_CACHE)
-    _COMBINED_FILTER_CACHE = make_combined_filter(_GEO_RE_CACHE, _INST_REGEXES_CACHE)
-    log.info("Filter cached: %d geo tokens, %d institution patterns",
-             len(_GEO_TOKENS_CACHE), len(_INST_REGEXES_CACHE))
-    return _COMBINED_FILTER_CACHE
+    log.info("Filter cached: %d geo tokens, %d safe + %d bare-abbreviation institution patterns",
+             len(_GEO_TOKENS_CACHE), len(_INST_REGEXES_CACHE), len(_ABBREV_REGEXES_CACHE))
+
+
+def get_cached_filter_tiers() -> tuple[re.Pattern, re.Pattern]:
+    """
+    Lazily build and cache (safe_filter, abbrev_filter) for field-tiered
+    Norwegian detection on raw per-field entries — see is_norwegian_entry().
+
+    safe_filter    Geo names + full institution names + guarded abbreviations
+                   + .no email.  Trustworthy against any field's text.
+    abbrev_filter  The bare, unguarded abbreviation patterns alone.  Matches
+                   a real institution's short code, but collides often enough
+                   with unrelated specimen/strain codes that it's only safe
+                   against identity-bearing fields (SPECIMEN_LIKE_FIELDS lists
+                   the fields it's excluded from).
+    """
+    global _FILTER_TIERS_CACHE
+    if _FILTER_TIERS_CACHE is not None:
+        return _FILTER_TIERS_CACHE
+    _ensure_filter_caches_built()
+    safe_filter = make_combined_filter(_GEO_RE_CACHE, _INST_REGEXES_CACHE)
+    abbrev_filter = (
+        re.compile("|".join(f"(?:{p.pattern})" for p in _ABBREV_REGEXES_CACHE), re.IGNORECASE)
+        if _ABBREV_REGEXES_CACHE else re.compile(r"(?!)")   # never matches
+    )
+    _FILTER_TIERS_CACHE = (safe_filter, abbrev_filter)
+    return _FILTER_TIERS_CACHE
 
 
 def get_cached_web_domains() -> set[str]:
@@ -223,16 +294,36 @@ def get_cached_web_domains() -> set[str]:
     return _WEB_DOMAINS_CACHE
 
 
-def is_norwegian_entry(entry: dict, combined_filter: re.Pattern) -> bool:
-    """True if any field value in an EBI Search entry carries a Norwegian signal."""
+def is_norwegian_entry(entry: dict, safe_filter: re.Pattern,
+                       abbrev_filter: re.Pattern) -> bool:
+    """
+    True if any field value in an EBI Search entry carries a Norwegian signal.
+
+    Bare institution abbreviations (abbrev_filter) are only trusted in
+    identity-bearing fields — center_name, broker_name, submitter, author,
+    affiliation, etc. — never in SPECIMEN_LIKE_FIELDS (description, alias,
+    scientific_name, strain, ...), where they collide with unrelated specimen
+    and strain codes (see SPECIMEN_LIKE_FIELDS for confirmed examples).
+    safe_filter (geo names, full institution names, guarded abbreviations,
+    .no email) is checked against every field regardless.
+    """
     fields = entry.get("fields", {})
-    parts: list[str] = []
-    for vals in fields.values():
-        if isinstance(vals, list):
-            parts.extend(str(v) for v in vals if v is not None and str(v).strip())
-        elif vals is not None and str(vals).strip():
-            parts.append(str(vals))
-    combined = strip_false_positives(" ".join(parts))
-    if not combined.strip():
+    all_parts: list[str] = []
+    identity_parts: list[str] = []
+    for key, vals in fields.items():
+        vlist = vals if isinstance(vals, list) else [vals]
+        for v in vlist:
+            if v is None or not str(v).strip():
+                continue
+            s = str(v)
+            all_parts.append(s)
+            if key not in SPECIMEN_LIKE_FIELDS:
+                identity_parts.append(s)
+
+    all_text = strip_false_positives(" ".join(all_parts))
+    if not all_text.strip():
         return False
-    return bool(combined_filter.search(combined))
+    if safe_filter.search(all_text):
+        return True
+    identity_text = strip_false_positives(" ".join(identity_parts))
+    return bool(identity_text.strip()) and bool(abbrev_filter.search(identity_text))
