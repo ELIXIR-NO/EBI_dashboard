@@ -53,7 +53,7 @@ from ebi_api import (
     get_json, get_retrievable_fields, get_hit_count,
 )
 from norwegian_filter import (
-    get_cached_combined_filter, is_norwegian_entry,
+    get_cached_filter_tiers, is_norwegian_entry,
 )
 import time
 import re
@@ -333,7 +333,7 @@ def _save_partition(domain: str, key: str, entries: list[dict],
 
 
 def _fetch_window(domain: str, fields: list[str], query: str,
-                  combined_filter: re.Pattern) -> list[dict]:
+                  safe_filter: re.Pattern, abbrev_filter: re.Pattern) -> list[dict]:
     """Paginate through a single query window."""
     url    = f"{BASE_URL}/{domain}"
     params = {
@@ -361,7 +361,7 @@ def _fetch_window(domain: str, fields: list[str], query: str,
             entries.extend(batch)
         else:
             entries.extend(
-                e for e in batch if is_norwegian_entry(e, combined_filter)
+                e for e in batch if is_norwegian_entry(e, safe_filter, abbrev_filter)
             )
 
         params["start"] += PAGE_SIZE
@@ -377,7 +377,7 @@ def _fetch_window(domain: str, fields: list[str], query: str,
 # ──────────────────────────────────────────────────────────────────────────────
 
 def fetch_domain_partitioned(domain: str, cfg: dict, fields: list[str],
-                              combined_filter: re.Pattern) -> list[dict]:
+                              safe_filter: re.Pattern, abbrev_filter: re.Pattern) -> list[dict]:
     """
     Fetch a partitioned domain with incremental caching.
 
@@ -478,7 +478,7 @@ def fetch_domain_partitioned(domain: str, cfg: dict, fields: list[str],
         # < (not <=): a window reporting exactly the cap may hold more than it
         # reports, so only paginate directly when strictly below the cap.
         if count < MAX_PAGEABLE:
-            entries = _fetch_window(domain, fields, window_query, combined_filter)
+            entries = _fetch_window(domain, fields, window_query, safe_filter, abbrev_filter)
             _save_partition(domain, key, entries, manifest)
             log.info("%s→ fetched %d entries", indent + "  ", len(entries))
             time.sleep(RATE_SLEEP)
@@ -493,7 +493,7 @@ def fetch_domain_partitioned(domain: str, cfg: dict, fields: list[str],
                 "some entries will be missed.",
                 indent, domain, d_start, count, MAX_PAGEABLE, MAX_PAGEABLE,
             )
-            entries = _fetch_window(domain, fields, window_query, combined_filter)
+            entries = _fetch_window(domain, fields, window_query, safe_filter, abbrev_filter)
             _save_partition(domain, key, entries, manifest)
             time.sleep(RATE_SLEEP)
             return entries
@@ -544,7 +544,7 @@ def fetch_domain_partitioned(domain: str, cfg: dict, fields: list[str],
 # ──────────────────────────────────────────────────────────────────────────────
 
 def fetch_domain(domain: str, cfg: dict, fields: list[str],
-                 combined_filter: re.Pattern) -> list[dict]:
+                 safe_filter: re.Pattern, abbrev_filter: re.Pattern) -> list[dict]:
     """
     Fetch all entries for a domain.
 
@@ -560,7 +560,7 @@ def fetch_domain(domain: str, cfg: dict, fields: list[str],
         if hit_count >= MAX_PAGEABLE:
             log.info("  %s at/above MAX_PAGEABLE – using incremental partitioned fetch",
                      domain)
-            return fetch_domain_partitioned(domain, cfg, fields, combined_filter)
+            return fetch_domain_partitioned(domain, cfg, fields, safe_filter, abbrev_filter)
 
     # Standard single-pass pagination for small domains
     url    = f"{BASE_URL}/{domain}"
@@ -595,7 +595,7 @@ def fetch_domain(domain: str, cfg: dict, fields: list[str],
             entries.extend(batch)
         else:
             entries.extend(
-                e for e in batch if is_norwegian_entry(e, combined_filter)
+                e for e in batch if is_norwegian_entry(e, safe_filter, abbrev_filter)
             )
 
         params["start"] += PAGE_SIZE
@@ -673,11 +673,11 @@ def fetch_and_save_domain(domain: str) -> int:
     Returns the number of entries saved.
     """
     cfg = DOMAINS[domain]
-    combined_filter = get_cached_combined_filter()
+    safe_filter, abbrev_filter = get_cached_filter_tiers()
 
     log.info("=== fetch_and_save_domain: %s ===", domain)
     fields  = get_retrievable_fields(domain, cfg)
-    entries = fetch_domain(domain, cfg, fields, combined_filter)
+    entries = fetch_domain(domain, cfg, fields, safe_filter, abbrev_filter)
     save_domain(domain, entries, fields)
 
     # Partition checkpoint summary (files are retained so a re-run resumes)
