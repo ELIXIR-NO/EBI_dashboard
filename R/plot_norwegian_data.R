@@ -55,6 +55,13 @@ pick_field <- function(fields, keys, default = NA_character_) {
   default
 }
 
+#' NA for absent or empty scalars, so precedence rules that fall back on a
+#' second field (e.g. broker before center) treat "" and NA alike.
+blank_to_na <- function(x) {
+  x <- as.character(x %||% NA_character_)
+  if (length(x) == 0L || is.na(x[[1L]]) || !nzchar(x[[1L]])) NA_character_ else x[[1L]]
+}
+
 # ── Paths ─────────────────────────────────────────────────────────────────────
 if (requireNamespace("here", quietly = TRUE)) {
   ROOT <- here::here()
@@ -417,7 +424,10 @@ parse_entry <- function(entry, domain) {
     institution = to_abbrev(as.character(normalise_institution(
       affil_vals, email_vec = email_vals, context_vec = country_vals
     ))[1L]),
-    broker      = NA_character_
+    # Non-ENA domains carry neither an ENA broker nor an ENA center; the two
+    # are resolved into the displayed `broker` column in load_all_data().
+    ena_broker  = NA_character_,
+    ena_center  = NA_character_
   )
 }
 
@@ -449,6 +459,9 @@ load_standard_domain <- function(domain) {
 #'   affiliation – union of all pipe-separated values across rows
 #'   email       – first non-NA
 #'   institution – majority vote across rows; ties broken by first occurrence
+#'   ena_broker / ena_center – first non-empty value of EACH, independently, so
+#'                  a duplicate row's center can never displace a broker seen
+#'                  on another row (precedence is applied in load_all_data())
 #'   domain      – kept as-is (constant within an accession)
 #'   year/quarter/month – recomputed from the kept date
 collapse_pipe <- function(x) {
@@ -473,7 +486,8 @@ dedupe_by_accession <- function(df) {
       email       = first(email[!is.na(email)]) %||% NA_character_,
       date        = suppressWarnings(min(date, na.rm = TRUE)),
       institution = majority(institution),
-      broker      = first(broker[!is.na(broker) & nzchar(broker)]) %||% NA_character_,
+      ena_broker  = first(ena_broker[!is.na(ena_broker) & nzchar(ena_broker)]) %||% NA_character_,
+      ena_center  = first(ena_center[!is.na(ena_center) & nzchar(ena_center)]) %||% NA_character_,
       .groups     = "drop"
     ) %>%
     mutate(
@@ -498,16 +512,17 @@ parse_ena_row <- function(row) {
   country_vals <- unlist(row$sample_countries)
 
   # Broker: sra-study carries no broker_name of its own, so inherit the broker
-  # from the study's joined samples (sample_brokers, surfaced by join_ena.py)
-  # when present, falling back to the study's center_name.  Matches the sample
-  # path (broker_name preferred over center_name) under the "Broker / Center"
-  # colour mode.
+  # from the study's joined samples (sample_brokers, surfaced by join_ena.py).
+  # The study's own center_name is kept in a SEPARATE column rather than being
+  # collapsed in here: broker-over-center precedence is applied once, in
+  # load_all_data(), after dedupe_by_accession(), so a center can never
+  # overwrite a broker at any stage.
   sample_brokers <- unlist(row$sample_brokers)
   sample_brokers <- sample_brokers[!is.na(sample_brokers) & nzchar(sample_brokers)]
   broker_val <- if (length(sample_brokers) > 0L) {
     sample_brokers[[1L]]
   } else {
-    row$center_name %||% NA_character_
+    NA_character_
   }
 
   # first_public_date from sra-experiment (earliest across experiments for the study).
@@ -531,7 +546,8 @@ parse_ena_row <- function(row) {
     # Raw sample centers, used for display when norwegian_submitter=FALSE (study
     # kept on sample signal, not submitter signal). Separated by pipe for consistency.
     sample_centers_str = paste(unlist(row$sample_centers), collapse = " | "),
-    broker      = broker_val
+    ena_broker  = broker_val,
+    ena_center  = blank_to_na(row$center_name)
   )
 }
 
@@ -564,7 +580,8 @@ parse_sra_sample <- function(entry) {
 
   # broker_name: the ENA submitter / data broker (fetched field in sra-sample config).
   # center_name: the submitting center / research institution.
-  # Both are tried for institution guessing; broker_name also drives the broker column.
+  # Both are tried for institution guessing; broker_name drives the broker
+  # column, with center_name only as a fallback (resolved in load_all_data()).
   broker_name <- pick_field(f, c("broker_name"))
   center_name <- pick_field(f, c("center_name"))
   country_val <- pick_field(f, c("country"))
@@ -594,11 +611,11 @@ parse_sra_sample <- function(entry) {
     institution = to_abbrev(as.character(normalise_institution(
       affil_vals, context_vec = country_val
     ))[1L]),
-    # broker_name first, center_name as fallback.  Note: `%||%` only coalesces
-    # NULL/empty, not NA — and pick_field() returns NA_character_ when a field is
-    # absent, so chaining `broker_name %||% center_name` would keep the NA and
-    # never fall back.  pick_field() over both keys gives the intended fallback.
-    broker      = pick_field(f, c("broker_name", "center_name"))
+    # Carried separately (not collapsed to one value here) so the broker
+    # survives dedupe_by_accession(): a duplicate row that has only a
+    # center_name must not displace a broker_name seen on another row.
+    ena_broker  = broker_name,
+    ena_center  = center_name
   )
 }
 
@@ -630,10 +647,49 @@ load_all_data <- function() {
   sample_rows   <- load_sra_samples()
 
   df <- bind_rows(c(standard_rows, list(ena_rows), list(sample_rows)))
+
+  if (!"sample_centers_str" %in% names(df)) {
+    df$sample_centers_str <- NA_character_
+  }
+
+  # The broker/center helpers only exist once an ENA source has been loaded;
+  # add them so the resolution below works for any combination of sources.
+  for (.col in c("ena_broker", "ena_center")) {
+    if (!.col %in% names(df)) df[[.col]] <- NA_character_
+  }
+
+  if (nrow(df) == 0L) {
+    return(tibble(
+      domain = character(),
+      domain_label = character(),
+      accession = character(),
+      title = character(),
+      date = as.Date(character()),
+      year = integer(),
+      quarter = integer(),
+      month = integer(),
+      institution = character(),
+      broker = character(),
+      affiliation = character(),
+      country = character(),
+      email = character(),
+      norwegian_submitter = logical(),
+      identifier_url = character(),
+      sample_centers_str = character()
+    ))
+  }
+
   df <- df %>%
     mutate(
       domain_label = DOMAIN_LABELS[domain],
       domain_label = if_else(is.na(domain_label), domain, domain_label),
+      # Broker / Center precedence, applied once for the whole frame: a broker
+      # (ENA broker_name, or the study's samples' broker_name) always wins, and
+      # the center_name is used only when no broker is set.  Keeping the two
+      # apart until here is what guarantees a center can never overwrite a
+      # broker in parse_*() or in dedupe_by_accession().
+      broker = if_else(!is.na(ena_broker) & nzchar(ena_broker),
+                       ena_broker, ena_center),
       # Norwegian-submitter flag.  For ENA studies and ENA samples the `country`
       # field is the sample's geographic ORIGIN, not the submitter, so an entry
       # Norwegian only via country is a "Norwegian sample, foreign submitter"
@@ -663,13 +719,15 @@ load_all_data <- function() {
     # normalized institution, so users see where the samples came from.
     mutate(
       institution = if_else(
-        domain == "ENA" & !norwegian_submitter &
+        ("sample_centers_str" %in% names(.)) &
+          domain == "ENA" & !norwegian_submitter &
           !is.na(sample_centers_str) & nzchar(sample_centers_str),
         sample_centers_str,
         institution
       )
     ) %>%
-    select(-sample_centers_str)  # Drop helper column after use
+    # Drop helper columns after use.
+    select(-any_of(c("sample_centers_str", "ena_broker", "ena_center")))
   df
 }
  
