@@ -22,7 +22,10 @@ Strategy
 --------
 1. DISCOVER  – ebi_api.get_retrievable_fields() lists retrievable field IDs.
 2. FETCH     – *:* with all fields.  Domains with a partition_date_field that
-               report ≥1M entries are split into year/quarter/month windows.
+               exceed MAX_PAGEABLE are split into year/quarter/month/day
+               windows; any single window still over the cap (and sra-study,
+               which has no searchable date field) is paged with a keyset
+               cursor on `acc` — see _fetch_window().
 3. CACHE     – Only the last REFETCH_YEARS calendar years are re-fetched; older
                windows are served from sha256-verified partition files on disk.
 4. FILTER    – sra-study is saved unfiltered (filter deferred to join_ena.py).
@@ -75,12 +78,20 @@ log = logging.getLogger("fetch_ebi")
 
 TODAY = date.today().isoformat()
 
-# Hard pagination cap of the EBI Search API: it never returns more than this
-# many entries for a single query, and it also CAPS the reported hitCount at
-# this value.  A domain/window reporting exactly MAX_PAGEABLE may therefore hold
-# far more — so any count that reaches the cap must be split into smaller
-# (year → quarter → month) windows rather than paginated directly.
-MAX_PAGEABLE         = 1_000_000
+# Hard deep-paging cap of the EBI Search API.  `start` at or beyond this value
+# returns an empty `entries` list — silently, with HTTP 200 and the true
+# (UNcapped) hitCount still reported.  A plain start-offset loop therefore
+# stops here and looks exactly like a clean finish, so any window above the cap
+# must either be split into smaller windows or continued with the keyset cursor
+# in _fetch_window().  Verified against the live API: sra-study reports
+# hitCount=753568 but returns nothing at start=100000.
+MAX_PAGEABLE         = 100_000
+
+# Field used as the keyset cursor when a window exceeds MAX_PAGEABLE.  It must
+# be unique per entry and sortable; `acc` is both in every SRA domain (there it
+# is also the entry id).  Override per domain with a "cursor_field" key.
+DEFAULT_CURSOR_FIELD = "acc"
+
 PARTITION_START_YEAR = 2007
 
 # Number of trailing calendar years that are always re-fetched on every run.
@@ -96,10 +107,16 @@ REFETCH_YEARS = 2
 # This trades a rare edge-case (Norwegian sample linked to a non-Norwegian
 # experiment) for avoiding OOM on the fetch server.
 #
-# FILTER_VERSION must be bumped whenever the filtering strategy changes so that
-# fetch_domain_partitioned() invalidates old unfiltered partition files.
+# FILTER_VERSION must be bumped whenever the filtering OR pagination strategy
+# changes, so that fetch_domain_partitioned() discards partition files whose
+# contents the current code would no longer produce.
+#
+# 3: MAX_PAGEABLE was 1_000_000, ten times the API's real deep-paging cap, so
+#    every window holding 100 K–1 M entries was silently cut off at 100 K and
+#    then checkpointed to disk as if complete.  Immutable years would otherwise
+#    keep serving those truncated files forever.
 SRA_DOMAINS    = frozenset({"sra-study"})
-FILTER_VERSION = 2
+FILTER_VERSION = 3
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -182,8 +199,10 @@ DOMAINS: dict[str, dict] = {
             "domain_source", "first_public_date", "id", "insdc-project",
             "study_keywords", "study_type", "tag",
         ],
-        # first_public_date is not searchable in sra-study; total ≈730K (<1M)
-        # so standard single-pass pagination handles it without partitioning.
+        # No partition_date_field: the sra-study index exposes first_public_date
+        # as retrievable but NOT searchable (nor any other date), so there is no
+        # date axis to window on.  Its ~753 K entries are fetched in one pass,
+        # with _fetch_window's keyset cursor carrying it past the 100 K cap.
         "join_key": "study_accession",
         # ENA/SRA study accessions are SRP/ERP/DRP (insdc.sra) or PRJ* (bioproject);
         # the render tries each prefix and links the one whose pattern matches.
@@ -332,44 +351,128 @@ def _save_partition(domain: str, key: str, entries: list[dict],
     }
 
 
+def _cursor_value(entry: dict, cursor_field: str) -> str:
+    """Read an entry's keyset cursor value (top-level first, then `fields`)."""
+    val = entry.get(cursor_field)
+    if val is None:
+        vals = entry.get("fields", {}).get(cursor_field) or []
+        val = vals[0] if vals else entry.get("id", "")
+    return str(val)
+
+
 def _fetch_window(domain: str, fields: list[str], query: str,
-                  safe_filter: re.Pattern, abbrev_filter: re.Pattern) -> list[dict]:
-    """Paginate through a single query window."""
-    url    = f"{BASE_URL}/{domain}"
-    params = {
-        "query":  query,
-        "fields": ",".join(fields),
-        "format": "json",
-        "size":   PAGE_SIZE,
-        "start":  0,
-    }
-    entries:   list[dict] = []
-    hit_count: int | None = None
+                  safe_filter: re.Pattern, abbrev_filter: re.Pattern,
+                  hit_count: int | None = None) -> tuple[list[dict], int]:
+    """
+    Paginate through a single query window.
+
+    Returns (kept_entries, entries_seen) — `entries_seen` counts everything the
+    API returned, before the Norwegian filter, so callers can report the keep
+    ratio and detect short reads.
+
+    Windows at or below MAX_PAGEABLE use a plain start-offset loop.  Above it
+    the offset loop would stop dead at the cap (see MAX_PAGEABLE), so the window
+    is continued with a keyset cursor instead: the query is re-issued sorted by
+    `cursor_field` and restricted to `cursor_field:[<last value seen> TO *]`, so
+    every chunk starts from offset 0 and the cap is never reached.  The
+    inclusive lower bound re-serves the entries tied on the cursor value, which
+    are tracked in `boundary_ids` and skipped once.
+    """
+    url          = f"{BASE_URL}/{domain}"
+    cursor_field = DOMAINS.get(domain, {}).get("cursor_field", DEFAULT_CURSOR_FIELD)
+    is_sra       = domain in SRA_DOMAINS
+
+    if hit_count is None:
+        hit_count = get_hit_count(domain, fields, query)
+    use_cursor = hit_count > MAX_PAGEABLE
+    if use_cursor:
+        log.info("    window has %d entries > cap %d – paging via %s cursor",
+                 hit_count, MAX_PAGEABLE, cursor_field)
+
+    entries:      list[dict] = []
+    total_seen:   int        = 0
+    cursor:       str | None = None
+    boundary_ids: set[str]   = set()
+    failed:       bool       = False
 
     while True:
-        try:
-            data = get_json(url, params)
-        except Exception as exc:
-            log.error("    Window fetch failed at start=%d: %s", params["start"], exc)
+        chunk_query = (query if cursor is None else
+                       f"({query}) AND {cursor_field}:[{cursor} TO *]")
+        params = {
+            "query":  chunk_query,
+            "fields": ",".join(fields),
+            "format": "json",
+            "size":   PAGE_SIZE,
+            "start":  0,
+        }
+        if use_cursor:
+            params["sort"] = cursor_field
+
+        # Carry the boundary set forward so entries re-served by the inclusive
+        # lower bound stay skipped even if the cursor cannot advance this chunk.
+        last_val:   str | None = cursor
+        last_ids:   set[str]   = set(boundary_ids)
+        chunk_seen: int        = 0
+        chunk_hits: int | None = None
+        exhausted:  bool       = False
+
+        while params["start"] < MAX_PAGEABLE:
+            try:
+                data = get_json(url, params)
+            except Exception as exc:
+                # Fall through rather than return: the completeness check below
+                # is what stops a short window being cached as if it were whole.
+                log.error("    Window fetch failed at start=%d: %s",
+                          params["start"], exc)
+                failed = True
+                break
+
+            # Bound the offset loop by this chunk's own hitCount: the API
+            # answers 400, not an empty page, once start >= hitCount, and a
+            # 400 here would abandon the rest of the window.
+            if chunk_hits is None:
+                chunk_hits = int(data.get("hitCount", 0))
+
+            batch = data.get("entries", [])
+            if not batch:
+                exhausted = True
+                break
+
+            for e in batch:
+                eid = e.get("id", "")
+                val = _cursor_value(e, cursor_field)
+                if cursor is not None and val == cursor and eid in boundary_ids:
+                    continue
+                if val != last_val:
+                    last_val, last_ids = val, {eid}
+                else:
+                    last_ids.add(eid)
+                total_seen += 1
+                chunk_seen += 1
+                if is_sra or is_norwegian_entry(e, safe_filter, abbrev_filter):
+                    entries.append(e)
+
+            params["start"] += PAGE_SIZE
+            if params["start"] >= chunk_hits:
+                exhausted = True
+                break
+            time.sleep(RATE_SLEEP)
+
+        if failed or exhausted or not use_cursor:
             break
-
-        if hit_count is None:
-            hit_count = int(data.get("hitCount", 0))
-
-        batch = data.get("entries", [])
-        if domain in SRA_DOMAINS:
-            entries.extend(batch)
-        else:
-            entries.extend(
-                e for e in batch if is_norwegian_entry(e, safe_filter, abbrev_filter)
-            )
-
-        params["start"] += PAGE_SIZE
-        if params["start"] >= (hit_count or 0) or not batch:
+        if chunk_seen == 0 or last_val is None:
+            log.error("    %s: keyset cursor stalled at %s=%r after %d entries",
+                      domain, cursor_field, cursor, total_seen)
             break
+        cursor, boundary_ids = last_val, last_ids
         time.sleep(RATE_SLEEP)
 
-    return entries
+    if hit_count and total_seen < hit_count:
+        log.error("    %s: INCOMPLETE window – got %d of %d reported entries "
+                  "for query %s", domain, total_seen, hit_count, query)
+
+    return entries, total_seen
+
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -475,10 +578,12 @@ def fetch_domain_partitioned(domain: str, cfg: dict, fields: list[str],
             _save_partition(domain, key, [], manifest)
             return []
 
-        # < (not <=): a window reporting exactly the cap may hold more than it
-        # reports, so only paginate directly when strictly below the cap.
-        if count < MAX_PAGEABLE:
-            entries = _fetch_window(domain, fields, window_query, safe_filter, abbrev_filter)
+        # Windows within the cap are fetched directly.  Larger ones are still
+        # split rather than left to the cursor: small partitions checkpoint to
+        # disk, so an interrupted run resumes instead of restarting the year.
+        if count <= MAX_PAGEABLE:
+            entries, _ = _fetch_window(domain, fields, window_query,
+                                       safe_filter, abbrev_filter, hit_count=count)
             _save_partition(domain, key, entries, manifest)
             log.info("%s→ fetched %d entries", indent + "  ", len(entries))
             time.sleep(RATE_SLEEP)
@@ -486,14 +591,14 @@ def fetch_domain_partitioned(domain: str, cfg: dict, fields: list[str],
 
         # Window too large: split to the next finer granularity.
         if day is not None:
-            # A single day over the cap is unsplittable (the API has no sub-day
-            # date field), so fetch up to the cap and warn.  Vanishingly rare.
-            log.warning(
-                "%s%s %s has %d entries > MAX_PAGEABLE=%d; fetching up to %d — "
-                "some entries will be missed.",
-                indent, domain, d_start, count, MAX_PAGEABLE, MAX_PAGEABLE,
-            )
-            entries = _fetch_window(domain, fields, window_query, safe_filter, abbrev_filter)
+            # A single day is the finest date window the API offers, but days
+            # over the cap are common in the SRA domains (2024-12-10 alone holds
+            # ~195 K samples).  _fetch_window pages past the cap with its keyset
+            # cursor, so the day is still retrieved in full.
+            log.info("%s%s %s has %d entries > cap %d – keyset cursor",
+                     indent, domain, d_start, count, MAX_PAGEABLE)
+            entries, _ = _fetch_window(domain, fields, window_query,
+                                       safe_filter, abbrev_filter, hit_count=count)
             _save_partition(domain, key, entries, manifest)
             time.sleep(RATE_SLEEP)
             return entries
@@ -552,56 +657,22 @@ def fetch_domain(domain: str, cfg: dict, fields: list[str],
     which implements both the year/quarter/month window splitting and the
     incremental cache.  Small domains use standard single-pass pagination.
     """
-    if cfg.get("partition_date_field"):
-        hit_count = get_hit_count(domain, fields, CATCH_ALL_QUERY)
-        log.info("  %s → %d total entries in domain", domain, hit_count)
-        # >= (not >): the API caps hitCount at MAX_PAGEABLE, so a domain reporting
-        # exactly the cap may actually hold many more and must be partitioned.
-        if hit_count >= MAX_PAGEABLE:
-            log.info("  %s at/above MAX_PAGEABLE – using incremental partitioned fetch",
-                     domain)
-            return fetch_domain_partitioned(domain, cfg, fields, safe_filter, abbrev_filter)
+    hit_count = get_hit_count(domain, fields, CATCH_ALL_QUERY)
+    log.info("  %s → %d total entries in domain", domain, hit_count)
 
-    # Standard single-pass pagination for small domains
-    url    = f"{BASE_URL}/{domain}"
-    params = {
-        "query":  CATCH_ALL_QUERY,
-        "fields": ",".join(fields),
-        "format": "json",
-        "size":   PAGE_SIZE,
-        "start":  0,
-    }
-    entries:    list[dict] = []
-    hit_count:  int | None = None
-    total_seen: int        = 0
+    # hitCount is reported accurately even above MAX_PAGEABLE, so > is exact
+    # here: only domains that genuinely exceed the cap need partitioning.
+    if cfg.get("partition_date_field") and hit_count > MAX_PAGEABLE:
+        log.info("  %s above MAX_PAGEABLE – using incremental partitioned fetch",
+                 domain)
+        return fetch_domain_partitioned(domain, cfg, fields, safe_filter, abbrev_filter)
 
-    while True:
-        log.info("  GET %s  start=%d", domain, params["start"])
-        try:
-            data = get_json(url, params)
-        except Exception as exc:
-            log.error("  Failed fetching %s at start=%d: %s",
-                      domain, params["start"], exc)
-            break
-
-        if hit_count is None:
-            hit_count = int(data.get("hitCount", 0))
-            log.info("  %s → %d total entries in domain", domain, hit_count)
-
-        batch = data.get("entries", [])
-        total_seen += len(batch)
-
-        if domain in SRA_DOMAINS:
-            entries.extend(batch)
-        else:
-            entries.extend(
-                e for e in batch if is_norwegian_entry(e, safe_filter, abbrev_filter)
-            )
-
-        params["start"] += PAGE_SIZE
-        if params["start"] >= (hit_count or 0) or not batch:
-            break
-        time.sleep(RATE_SLEEP)
+    # Single-pass fetch for every other domain.  _fetch_window transparently
+    # switches to its keyset cursor above MAX_PAGEABLE, so this path is safe for
+    # sra-study (~753 K entries, no searchable date field to partition on).
+    entries, total_seen = _fetch_window(domain, fields, CATCH_ALL_QUERY,
+                                        safe_filter, abbrev_filter,
+                                        hit_count=hit_count)
 
     if domain in SRA_DOMAINS:
         log.info("  %s → saved all %d entries unfiltered (filter deferred to join_ena.py)",

@@ -44,6 +44,7 @@ Output
   data/raw/<domain>/<date>.json     – dated snapshots
 """
 
+import json
 import logging
 import sys
 import time
@@ -53,14 +54,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from ega_api import (
-    RATE_SLEEP, get_dacs, get_dac_datasets, get_dataset_studies,
-    get_dataset_samples,
+    RATE_SLEEP, TRANSIENT_ERRORS, get_dacs, get_dac_datasets,
+    get_dataset_studies, get_dataset_samples,
 )
 from norwegian_filter import (
     load_geo_tokens, load_institution_regexes, build_geo_regex,
     load_web_domains, email_domain_is_norwegian,
 )
 from fetch_ebi_data import save_domain
+from paths import RAW_DIR
 
 logging.basicConfig(
     level=logging.INFO,
@@ -163,14 +165,41 @@ def collect_norwegian_records(geo_re, inst_regexes,
     log.info("  %d DACs returned by the API", len(dacs))
 
     nor_dacs = []
+    screened = 0
+    failed   = 0
     for dac in dacs:
         acc = str(dac.get("accession_id") or "")
         if not acc.startswith("EGAC"):
             continue
-        insts, emails = dac_norwegian_signal(dac, geo_re, inst_regexes, web_domains)
+        screened += 1
+        # One malformed DAC row must not discard the DAC page-walk that just
+        # cost several minutes of live API paging.  Skip it, keep a tally, and
+        # let the systematic-failure check below decide whether the run is sound.
+        try:
+            insts, emails = dac_norwegian_signal(dac, geo_re, inst_regexes,
+                                                 web_domains)
+        except Exception as exc:
+            failed += 1
+            if failed <= 5:      # a systematic fault would log thousands
+                log.warning("  %s: screening failed (%s: %s)",
+                            acc or "<no accession>", type(exc).__name__, exc)
+            continue
         if insts or emails:
             nor_dacs.append((acc, insts, emails))
-    log.info("  %d Norwegian DACs after filtering", len(nor_dacs))
+
+    if failed:
+        log.error("  %d/%d DACs could not be screened", failed, screened)
+        # Screening is pure local regex work, so scattered failures mean odd
+        # data while a wholesale failure means our own code is broken (this is
+        # how the safe/abbrev tier split silently reached production).  Refusing
+        # to continue keeps a bug from being laundered into "no Norwegian DACs".
+        if failed == screened:
+            raise RuntimeError(
+                f"DAC screening failed for all {screened} DACs – the Norwegian "
+                f"filter is broken, not the data.  See the warnings above."
+            )
+    log.info("  %d Norwegian DACs after filtering (%d screened, %d skipped)",
+             len(nor_dacs), screened, failed)
 
     studies: dict[str, dict] = {}
     samples: dict[str, dict] = {}
@@ -280,20 +309,87 @@ def record_to_entry(rec: dict) -> dict:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Output guards
+# ──────────────────────────────────────────────────────────────────────────────
+
+def _latest_path(domain: str) -> Path:
+    """Where save_domain() writes this domain's current snapshot."""
+    return RAW_DIR / domain / "latest.json"
+
+
+def _has_existing_entries(domain: str) -> bool:
+    """True if a previous run left a readable, non-empty latest.json."""
+    try:
+        with open(_latest_path(domain), "r", encoding="utf-8") as fh:
+            return bool(json.load(fh).get("entries"))
+    except (OSError, ValueError):
+        return False
+
+
+def _keep_existing_outputs(reason: str) -> int:
+    """Degrade gracefully when the EGA API is unreachable.
+
+    Both outputs are Snakemake targets, so leaving the previous run's files in
+    place lets the pipeline finish on last run's EGA data instead of aborting
+    every downstream domain.  With no files to fall back on there is nothing
+    honest to do but fail.
+    """
+    log.error("EGA fetch failed: %s", reason)
+    missing = [d for d in (DOMAIN, DOMAIN_SAMPLE) if not _latest_path(d).exists()]
+    if missing:
+        log.error("No previous snapshot for %s – cannot continue",
+                  ", ".join(missing))
+        return 1
+    # Refresh the mtimes so Snakemake sees its targets as produced by this job.
+    # The true provenance survives regardless: the fetch_date recorded *inside*
+    # each payload still names the run that actually collected the data.
+    for d in (DOMAIN, DOMAIN_SAMPLE):
+        _latest_path(d).touch()
+    log.warning("Keeping the previous snapshot for %s and %s – the dashboard "
+                "will show STALE EGA data (fetch_date unchanged) until the "
+                "next successful run", DOMAIN, DOMAIN_SAMPLE)
+    return 0
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Main
 # ──────────────────────────────────────────────────────────────────────────────
 
 def main() -> int:
-    geo_re       = build_geo_regex(load_geo_tokens())
-    inst_regexes = load_institution_regexes()
+    geo_re = build_geo_regex(load_geo_tokens())
+    # load_institution_regexes() returns two tiers: full institution names and
+    # guarded patterns (safe anywhere), plus bare abbreviations ("\bOUS\b").
+    # A DAC contact's institution_name structurally *is* an institution name —
+    # an identity-bearing field, not the specimen/description text the bare
+    # abbreviations collide with — so both tiers are trusted here.
+    inst_safe, inst_abbrev = load_institution_regexes()
+    inst_regexes = inst_safe + inst_abbrev
     web_domains  = load_web_domains()
-    log.info("Filter ready: %d institution patterns, %d web domains",
-             len(inst_regexes), len(web_domains))
+    log.info("Filter ready: %d safe + %d bare-abbreviation institution patterns, "
+             "%d web domains", len(inst_safe), len(inst_abbrev), len(web_domains))
 
-    studies, samples = collect_norwegian_records(geo_re, inst_regexes, web_domains)
+    try:
+        studies, samples = collect_norwegian_records(geo_re, inst_regexes,
+                                                     web_domains)
+    except TRANSIENT_ERRORS as exc:
+        # The DAC page-walk is the one unguarded network call in the run: it
+        # precedes every per-dataset fetch, which have their own handlers.  A
+        # failure here has already survived 5 retries in ega_api.get_json, so
+        # the API really is down — and EGA alone must not sink a pipeline whose
+        # other domains fetched cleanly.
+        return _keep_existing_outputs(f"{type(exc).__name__}: {exc}")
 
     study_entries  = [record_to_entry(rec) for rec in studies.values()]
     sample_entries = [record_to_entry(rec) for rec in samples.values()]
+
+    # save_domain() overwrites latest.json unconditionally, so an empty result
+    # would silently erase EGA from the dashboard and read as "Norway has no
+    # EGA studies".  A real drop to zero is not plausible — accessions are only
+    # ever added — so treat it as a fault and keep what is already on disk.
+    if not study_entries and _has_existing_entries(DOMAIN):
+        log.error("Collected 0 EGA studies but %s holds entries – refusing to "
+                  "overwrite", _latest_path(DOMAIN))
+        return 1
 
     save_domain(DOMAIN,        study_entries,  FIELDS_USED)
     save_domain(DOMAIN_SAMPLE, sample_entries, FIELDS_USED)
