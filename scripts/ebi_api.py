@@ -15,7 +15,7 @@ import logging
 try:
     import requests
     from tenacity import (retry, stop_after_attempt, wait_exponential,
-                          retry_if_exception_type)
+                          retry_if_exception)
     _REQUESTS_AVAILABLE = True
 except ImportError:
     _REQUESTS_AVAILABLE = False
@@ -35,10 +35,24 @@ if _REQUESTS_AVAILABLE:
     SESSION = requests.Session()
     SESSION.headers.update({"Accept": "application/json"})
 
+    # Client errors other than 408/429 are deterministic — a malformed query or
+    # an out-of-range `start` answers 400 no matter how often it is repeated —
+    # so retrying them only burns the backoff budget before failing anyway.
+    RETRYABLE_CLIENT_ERRORS = frozenset({408, 429})
+
+    def _is_retryable(exc: BaseException) -> bool:
+        if not isinstance(exc, requests.RequestException):
+            return False
+        resp = getattr(exc, "response", None)
+        if resp is None:
+            return True                       # timeout / connection error
+        return not (400 <= resp.status_code < 500
+                    and resp.status_code not in RETRYABLE_CLIENT_ERRORS)
+
     @retry(
         stop=stop_after_attempt(5),
         wait=wait_exponential(multiplier=1, min=2, max=30),
-        retry=retry_if_exception_type(requests.RequestException),
+        retry=retry_if_exception(_is_retryable),
         reraise=True,
     )
     def get_json(url: str, params: dict) -> dict:

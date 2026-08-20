@@ -1,0 +1,2 @@
+domain,domain_label,accession,title,date,year,quarter,month,institution,broker,affiliation,country,email,norwegian_submitter,identifier_url
+pride,PRIDE,PXD000001,Study 1,2023-01-15,2023,1,1,UiO,Non-ENA,University of Oslo,Norway,uio@uio.no,TRUE,https://identifiers.org/pride.project:PXD000001

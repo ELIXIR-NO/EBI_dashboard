@@ -27,6 +27,7 @@ Endpoints used by fetch_ega.py
   GET /datasets/{acc}/samples         → samples (EGAN) belonging to a dataset
 """
 
+import json
 import logging
 
 try:
@@ -60,12 +61,30 @@ if _REQUESTS_AVAILABLE:
         resp = SESSION.get(url, params=params or {}, timeout=60)
         resp.raise_for_status()
         return resp.json()
+
+    # Failures that mean "the API misbehaved", as opposed to a bug in our code.
+    # Raised only after the retry decorator above has exhausted its attempts, so
+    # reaching a caller's handler already means the failure outlasted 5 tries.
+    # Callers use this to decide whether degrading gracefully is honest: a flaky
+    # endpoint justifies keeping yesterday's data, a TypeError never does.
+    # Deliberately NOT bare ValueError — that would swallow our own bugs, which
+    # is precisely the masking these handlers exist to avoid.  json.JSONDecodeError
+    # is listed only for requests < 2.27, where a malformed body escaped unwrapped;
+    # newer versions raise requests.exceptions.JSONDecodeError, a RequestException.
+    TRANSIENT_ERRORS: tuple[type[BaseException], ...] = (
+        requests.RequestException, json.JSONDecodeError,
+    )
 else:
     def get_json(url: str, params: dict | None = None):  # type: ignore[misc]
         raise RuntimeError(
             "requests/tenacity not installed – cannot make HTTP requests. "
             "Run: pip install requests tenacity"
         )
+
+    # Nothing is transient when the HTTP stack itself is missing — that is a
+    # deployment fault the caller must not paper over.  An empty tuple in an
+    # `except` clause catches nothing.
+    TRANSIENT_ERRORS: tuple[type[BaseException], ...] = ()
 
 
 # ── Pagination ──────────────────────────────────────────────────────────────────
