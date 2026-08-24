@@ -21,14 +21,17 @@ def _load_module(module_name: str, relative_path: str):
     return module
 
 
-def test_render_script_handles_empty_data():
+def test_render_script_handles_empty_data(isolated_repo):
     result = subprocess.run(
         ["Rscript", "-e", 'source("R/plot_norwegian_data.R")'],
-        cwd=str(ROOT),
+        cwd=str(isolated_repo),
         capture_output=True,
         text=True,
     )
     assert result.returncode == 0, result.stderr or result.stdout
+    # Guard against the isolation silently regressing: the render must have
+    # written into the temporary tree, not into the repo.
+    assert (isolated_repo / "output").is_dir(), result.stderr or result.stdout
 
 
 def test_email_domain_is_norwegian_uses_domain_not_local_part():

@@ -49,6 +49,34 @@ jobs:
           fi
 
       # ── Everything below only runs when the sentinel exists ────────────────
+
+      - name: Validate results on server
+        if: steps.check_sentinel.outputs.sentinel != ''
+        env:
+          MIN_CSV_ROWS: "1000"
+        run: |
+          # A Snakemake run can write the sentinel without having produced
+          # anything new (see the artefact-clearing step in launch.yml), so the
+          # sentinel alone is not proof of a real run.  Check the results look
+          # plausible before deploying them to Pages and committing them to
+          # main — a 2-row fixture CSV must never reach the live dashboard.
+          REMOTE="${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}"
+          WORKDIR="${{ secrets.REMOTE_WORKDIR }}"
+          HAVE_JOIN=$(ssh "$REMOTE" \
+            "test -s '$WORKDIR/data/processed/ena_joined.json' && echo yes || echo no")
+          CSV_ROWS=$(ssh "$REMOTE" \
+            "wc -l < '$WORKDIR/output/norwegian_entries.csv' 2>/dev/null || echo 0" \
+            | tr -dc '0-9')
+          CSV_ROWS=${CSV_ROWS:-0}
+          echo "ena_joined.json present: ${HAVE_JOIN}; CSV rows: ${CSV_ROWS}"
+          if [ "$HAVE_JOIN" != "yes" ] || [ "$CSV_ROWS" -lt "$MIN_CSV_ROWS" ]; then
+            # Clear the sentinel: without this the 3-hourly poll retries the
+            # same bad payload forever, one failed run every 3 hours.
+            ssh "$REMOTE" "rm -f '$WORKDIR/output/.run_complete'"
+            echo "::error::Sentinel present but results look wrong (ena_joined=${HAVE_JOIN}, csv_rows=${CSV_ROWS}, expected >= ${MIN_CSV_ROWS}). Sentinel cleared — check the Snakemake log on the server."
+            exit 1
+          fi
+
       - name: Checkout repository
         if: steps.check_sentinel.outputs.sentinel != ''
         uses: actions/checkout@v6

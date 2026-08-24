@@ -97,10 +97,24 @@ jobs:
                }
              '"
 
-      - name: Remove stale sentinel (if any)
+      - name: Clear sentinel and derived artefacts
         run: |
+          # The pull step above hard-resets the server tree to origin/main,
+          # which *restores* the committed artefacts (output/*.csv,
+          # output/*.png).  Snakemake then sees render's outputs already
+          # present, prunes the entire fetch -> join -> render chain, and the
+          # run finishes in under a minute having downloaded nothing — while
+          # still writing the sentinel, so publish.yml ships stale data.
+          # Deleting them here makes a real render the only way to satisfy the
+          # DAG, so a silent no-op run becomes impossible.
+          #
+          # data/raw/ and data/processed/ are deliberately NOT touched: they
+          # are the incremental fetch cache, and the fetch scripts decide for
+          # themselves what actually needs re-downloading.
           ssh "${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}" \
-            "rm -f '${{ secrets.REMOTE_WORKDIR }}/output/.run_complete'"
+            "cd '${{ secrets.REMOTE_WORKDIR }}' && \
+             rm -f output/.run_complete output/*.csv output/*.png && \
+             rm -rf docs"
 
       - name: Fire Snakemake (detached)
         run: |
