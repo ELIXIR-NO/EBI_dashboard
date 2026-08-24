@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def test_r_render_helpers_parse_dates_and_match_institutions():
+def test_r_render_helpers_parse_dates_and_match_institutions(isolated_repo):
     r_code = r'''
         env <- new.env()
         source("R/plot_norwegian_data.R", local = env)
@@ -19,7 +19,9 @@ def test_r_render_helpers_parse_dates_and_match_institutions():
 
     result = subprocess.run(
         ["Rscript", "-e", r_code],
-        cwd=str(ROOT),
+        # source() runs the whole script, output-writing block included, so
+        # this must not run in the repo root.  See the isolated_repo fixture.
+        cwd=str(isolated_repo),
         capture_output=True,
         text=True,
     )
