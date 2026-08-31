@@ -1,6 +1,6 @@
 {
-  "join_date": "2026-08-25",
-  "study_count": 1140,
+  "join_date": "2026-08-31",
+  "study_count": 1141,
   "entries": [
     {
       "accession": "DRP011628",
@@ -2681,8 +2681,8 @@
       "title": "Public Health England - Salmonella",
       "description": "Public Health England - Salmonella",
       "center_name": "",
-      "first_public_date": "20260818",
-      "n_experiments": 3,
+      "first_public_date": "20260825",
+      "n_experiments": 4,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -2729,7 +2729,7 @@
       "description": "A public-private-academic consortium, Genome-in-a-Bottle (GIAB), hosted by NIST to develop reference materials and standards for clinical sequencing",
       "center_name": "",
       "first_public_date": "20250509",
-      "n_experiments": 111,
+      "n_experiments": 109,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [],
@@ -9716,7 +9716,7 @@
       "description": "RRBS from wild and first generation Nile tilapia under captivity",
       "center_name": "",
       "first_public_date": "20211101",
-      "n_experiments": 12,
+      "n_experiments": 11,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [],
@@ -9821,7 +9821,7 @@
       "description": "DNA hydroxymethylation profiling between divergent phenotypes of captive Nile tilapia",
       "center_name": "",
       "first_public_date": "20211202",
-      "n_experiments": 12,
+      "n_experiments": 11,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [],
@@ -10037,7 +10037,7 @@
       "description": "miRNA expression study in liver of Salmo salar during smoltification and seawater transfer",
       "center_name": "",
       "first_public_date": "20220101",
-      "n_experiments": 42,
+      "n_experiments": 38,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [],
@@ -14924,7 +14924,7 @@
       "title": "Key Roles of Microbial Sulfur and Ammonium Oxidizers in Determining the Coastal Seafloor Ecological State",
       "description": "Key Roles of Microbial Sulfur and Ammonium Oxidizers in Determining the Coastal Seafloor Ecological State",
       "center_name": "",
-      "first_public_date": "20240922",
+      "first_public_date": "20260822",
       "n_experiments": 84,
       "source": "ENA",
       "domain": "sra-study",
@@ -17021,6 +17021,23 @@
       ],
       "sample_centers": [
         "University of Bergen"
+      ],
+      "sample_brokers": []
+    },
+    {
+      "accession": "SRP709733",
+      "title": "Linking nasopharyngeal microbiome to clinical, ultrasonographic and bacteriological diagnosis of calf respiratory disease",
+      "description": "Linking nasopharyngeal microbiome to clinical, ultrasonographic and bacteriological diagnosis of calf respiratory disease",
+      "center_name": "",
+      "first_public_date": "20260824",
+      "n_experiments": 212,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Department of Veterinary and Animal Sciences, University of Copenhagen, Denmark"
       ],
       "sample_brokers": []
     },
