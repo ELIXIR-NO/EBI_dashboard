@@ -390,7 +390,14 @@ server <- function(input, output, session) {
         is.na(identifier_url) | !nzchar(identifier_url), Accession,
         sprintf('<a href="%s" target="_blank" rel="noopener">%s</a>',
                 identifier_url, Accession))) |>
-      select(-identifier_url)
+      select(-identifier_url) |>
+      # Repository/Institution/Broker/Attribution are low-cardinality columns:
+      # as factors (most-common level first), DT renders their column filter
+      # as a pick-list of values instead of a free-text search box. Title,
+      # Accession and Email stay character (too many distinct values for a
+      # pick-list); Date keeps DT's native range-slider filter.
+      mutate(across(c(Repository, Institution, Broker, Attribution),
+                    ~ fct_infreq(factor(.x))))
     # Escape every column by name except Accession, which holds the link HTML.
     # (Column names avoid the rownames-offset ambiguity of numeric indices.)
   }, options = list(pageLength = 10, scrollX = TRUE), filter = "top",
