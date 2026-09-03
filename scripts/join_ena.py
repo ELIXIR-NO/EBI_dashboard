@@ -210,8 +210,96 @@ def load_samples() -> pd.DataFrame:
             ])),
         })
     df = rows_to_df(rows, SAMPLE_COLUMNS)
+
+    # EBI Search's sra-sample domain indexes broker_name (searchable, facetable)
+    # but does NOT mark it retrievable, so the fetch above returns "" for every
+    # sample even when ENA does record a broker (e.g. "ELIXIR Norway" brokering
+    # a Norwegian institution's samples) — this is what silently dropped broker
+    # attribution in the dashboard.  Backfill from ENA's own Portal API, which
+    # exposes broker_name cleanly and separately from center_name, for exactly
+    # the samples the regular fetch left blank.
+    if len(df):
+        missing = df.loc[df["sample_broker"].fillna("") == "", "sample_acc"] \
+            .dropna().tolist()
+        missing = [a for a in missing if a]
+        if missing:
+            log.info("  sra-sample: backfilling broker_name for %d samples via "
+                      "ENA Portal API …", len(missing))
+            broker_map = _fetch_broker_names(missing)
+            if broker_map:
+                fill = df["sample_acc"].map(broker_map).fillna("")
+                blank = df["sample_broker"].fillna("") == ""
+                df.loc[blank, "sample_broker"] = fill[blank]
+                log.info("  sra-sample: recovered %d broker names", len(broker_map))
+
     log.info("  sra-sample:     %d rows loaded", len(df))
     return df
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Broker-name backfill (EBI Search does not retrieve it)
+# ──────────────────────────────────────────────────────────────────────────────
+
+_PORTAL_URL   = "https://www.ebi.ac.uk/ena/portal/api/search"
+_BROKER_BATCH = 50   # Portal API query-string length is the practical limit
+
+
+def _fetch_broker_names(sample_accs: list[str]) -> dict[str, str]:
+    """
+    Look up broker_name for the given sample accessions via ENA's Portal API.
+
+    Why this is needed: EBI Search's sra-sample domain field config marks
+    broker_name searchable/facetable but NOT retrievable, so every fetch via
+    scripts/fetch_ebi_data.py gets back "" for it regardless of what ENA has
+    on record — silently dropping broker attribution (e.g. "ELIXIR Norway"
+    brokering samples whose center_name is the depositing institution) even
+    though the study/sample genuinely has one.  ENA's own Portal API exposes
+    broker_name as a clean field, separate from center_name, so it is used
+    here as a best-effort backfill for exactly the accessions the regular
+    fetch left blank.
+
+    Best-effort: network failures are logged and skipped so the join
+    continues with whatever the pipeline's own fetch collected instead.
+    Returns {sample_accession: broker_name}, omitting accessions with no
+    broker on record.
+    """
+    if not _REQUESTS_AVAILABLE:
+        log.warning("requests not installed – cannot backfill ENA broker_name")
+        return {}
+
+    result: dict[str, str] = {}
+    for i in range(0, len(sample_accs), _BROKER_BATCH):
+        batch = sample_accs[i : i + _BROKER_BATCH]
+        query = " OR ".join(f'sample_accession="{acc}"' for acc in batch)
+        try:
+            resp = _requests.get(
+                _PORTAL_URL,
+                params={
+                    "result": "sample",
+                    "query":  query,
+                    "fields": "sample_accession,broker_name",
+                    "format": "json",
+                    "limit":  len(batch),
+                },
+                timeout=60,
+            )
+            resp.raise_for_status()
+            data = resp.json() or []
+        except Exception as exc:
+            log.warning("    Broker-name backfill batch %d failed: %s",
+                        i // _BROKER_BATCH, exc)
+            continue
+
+        for entry in data:
+            acc    = (entry.get("sample_accession") or "").strip()
+            broker = (entry.get("broker_name") or "").strip()
+            if acc and broker:
+                result[acc] = broker
+
+        if i + _BROKER_BATCH < len(sample_accs):
+            time.sleep(0.4)
+
+    return result
 
 
 # ──────────────────────────────────────────────────────────────────────────────
