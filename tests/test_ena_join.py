@@ -20,6 +20,8 @@ def _load_module(module_name: str, relative_path: str):
 
 join_ena = _load_module("join_ena", "scripts/join_ena.py")
 
+import ena_portal  # noqa: E402  (needs SCRIPTS_DIR on sys.path)
+
 
 def test_join_ena_main_writes_summary_for_valid_norwegian_study(tmp_path, monkeypatch):
     raw_dir = tmp_path / "data" / "raw"
@@ -97,27 +99,52 @@ class _FakeResponse:
 def test_fetch_broker_names_backfills_from_ena_portal_api(monkeypatch):
     # EBI Search's sra-sample domain marks broker_name searchable/facetable but
     # not retrievable, so the regular fetch always sees "" for it even when
-    # ENA has a broker on record (e.g. ELIXIR Norway brokering samples for a
-    # Norwegian institution).  _fetch_broker_names() backfills it from ENA's
+    # ENA has a broker on record (e.g. ELIXIR-Norway brokering samples for a
+    # Norwegian institution).  fetch_broker_names() backfills it from ENA's
     # own Portal API, which exposes broker_name as a clean, separate field.
     calls = []
 
-    def fake_get(url, params, timeout):
-        calls.append((url, params))
-        assert url == join_ena._PORTAL_URL
-        assert params["result"] == "sample"
+    def fake_post(url, data, timeout):
+        calls.append((url, data))
+        assert url == ena_portal.SEARCH_URL
+        assert data["result"] == "sample"
         return _FakeResponse([
             {"sample_accession": "SAMEA11477150", "broker_name": "ELIXIR-Norway"},
             {"sample_accession": "SAMEA2", "broker_name": ""},
         ])
 
-    monkeypatch.setattr(join_ena, "_REQUESTS_AVAILABLE", True)
-    monkeypatch.setattr(join_ena, "_requests", type("R", (), {"get": staticmethod(fake_get)}))
+    monkeypatch.setattr(ena_portal, "_REQUESTS_AVAILABLE", True)
+    monkeypatch.setattr(ena_portal, "requests",
+                        type("R", (), {"post": staticmethod(fake_post)}))
 
-    result = join_ena._fetch_broker_names(["SAMEA11477150", "SAMEA2"])
+    result = ena_portal.fetch_broker_names(["SAMEA11477150", "SAMEA2"])
 
     assert result == {"SAMEA11477150": "ELIXIR-Norway"}
     assert len(calls) == 1
+
+
+def test_fetch_broker_names_batches_and_survives_a_failed_batch(monkeypatch):
+    # A batch that errors must not sink the whole backfill: the remaining
+    # batches still contribute, so the join proceeds with partial attribution
+    # rather than silently falling back to center_name everywhere.
+    seen = []
+
+    def fake_post(url, data, timeout):
+        batch_idx = len(seen)
+        seen.append(data["query"])
+        if batch_idx == 0:
+            raise RuntimeError("boom")
+        return _FakeResponse([{"sample_accession": "S3", "broker_name": "ELIXIR-Norway"}])
+
+    monkeypatch.setattr(ena_portal, "_REQUESTS_AVAILABLE", True)
+    monkeypatch.setattr(ena_portal, "requests",
+                        type("R", (), {"post": staticmethod(fake_post)}))
+    monkeypatch.setattr(ena_portal.time, "sleep", lambda _s: None)
+
+    result = ena_portal.fetch_broker_names(["S1", "S2", "S3", "S4"], batch_size=2)
+
+    assert len(seen) == 2
+    assert result == {"S3": "ELIXIR-Norway"}
 
 
 def test_load_samples_backfills_broker_only_where_missing(tmp_path, monkeypatch):
@@ -144,7 +171,7 @@ def test_load_samples_backfills_broker_only_where_missing(tmp_path, monkeypatch)
         assert accs == ["SAMEA11477150"]  # SAMEA2 already has a broker; excluded
         return {"SAMEA11477150": "ELIXIR-Norway"}
 
-    monkeypatch.setattr(join_ena, "_fetch_broker_names", fake_fetch_broker_names)
+    monkeypatch.setattr(join_ena, "fetch_broker_names", fake_fetch_broker_names)
 
     df = join_ena.load_samples()
     brokers = dict(zip(df["sample_acc"], df["sample_broker"]))

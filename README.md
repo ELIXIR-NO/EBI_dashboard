@@ -38,6 +38,8 @@ GitHub Actions (cron 02:30 UTC)
 ├─ scripts/fetch_ebi_data.py
 │    ├─ Queries EBI Search REST API  (GET /ws/rest/{domain}?query=Norway…)
 │    ├─ Paginates until all hits retrieved (PAGE_SIZE = 500)
+│    ├─ Backfills sra-sample broker_name via scripts/ena_portal.py
+│    │    (EBI Search indexes the field but will not return it)
 │    └─ Writes data/raw/{domain}/latest.json  (+ dated snapshot)
 │
 ├─ scripts/join_ena.py
@@ -216,6 +218,27 @@ Three sub-tables are intentionally omitted:
 - **sra-submission** (31M entries, no searchable date field — cannot be year-partitioned)
 - **sra-analysis** (24M entries, date field mismatch)
 - **sra-run** (42M entries, no searchable date field — was only used for run counts)
+
+### Broker attribution
+
+The dashboard's **Broker** column shows the ENA `broker_name` (e.g.
+`ELIXIR-Norway`) and falls back to `center_name` — the depositing institution —
+only when a record has no broker.
+
+EBI Search's `sra-sample` domain marks `broker_name` searchable and facetable
+but **not retrievable**, so the field is absent from every entry the fetch
+saves, whatever ENA actually holds. Left alone, the fallback fires everywhere
+and the dashboard shows the institution where the broker belongs.
+`scripts/ena_portal.py` therefore backfills `broker_name` from ENA's Portal
+API — a different service, which returns the field cleanly and separately from
+`center_name`. It runs in two places:
+
+- `fetch_ebi_data.py`, over `sra-sample` before the raw JSON is written
+  (this is the table the dashboard renders directly), and
+- `join_ena.py`, over the samples feeding the joined study table.
+
+The backfill is best-effort: batches that fail over the network are logged and
+skipped, and the pipeline continues with whatever attribution it already had.
 
 ---
 
