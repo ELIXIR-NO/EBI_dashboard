@@ -58,6 +58,7 @@ from ebi_api import (
 from norwegian_filter import (
     get_cached_filter_tiers, is_norwegian_entry,
 )
+from ena_portal import fetch_broker_names
 import time
 import re
 
@@ -684,6 +685,71 @@ def fetch_domain(domain: str, cfg: dict, fields: list[str],
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Broker-name backfill (EBI Search indexes broker_name but will not return it)
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Domains whose entries carry a BioSample accession as their entry id and whose
+# broker_name the EBI Search index refuses to return.  Only sra-sample declares
+# broker_name in required_fields, and its field config marks it
+# retrievable=false, so the field is silently absent from every entry saved.
+BROKER_BACKFILL_DOMAINS = frozenset({"sra-sample"})
+
+
+def backfill_broker_names(domain: str, entries: list[dict]) -> int:
+    """
+    Fill in `broker_name` on entries the EBI Search index left without one.
+
+    Why: EBI Search marks sra-sample's broker_name searchable and facetable but
+    NOT retrievable, so it never appears in a fetched entry even when ENA holds
+    one.  The dashboard reads broker_name per sample and falls back to
+    center_name when it is empty, so without this every sample showed its
+    depositing institution ("Norwegian Institute of Public Health (NIPH)")
+    where the broker ("ELIXIR-Norway") belongs.  join_ena.py backfills the same
+    field for the joined study table; this covers the far larger sra-sample
+    table that the dashboard renders directly.
+
+    Mutates `entries` in place, writing the value in EBI Search's own
+    list-valued field shape so downstream readers need no special case.  Only
+    entries currently lacking a broker are touched, so a value the index does
+    return is never overwritten.  Returns the number of entries filled.
+    """
+    if domain not in BROKER_BACKFILL_DOMAINS or not entries:
+        return 0
+
+    missing = {}
+    for entry in entries:
+        fields = entry.get("fields") or {}
+        current = fields.get("broker_name") or []
+        if isinstance(current, list):
+            current = current[0] if current else ""
+        if str(current).strip():
+            continue
+        acc = entry.get("id") or ""
+        if isinstance(acc, list):
+            acc = acc[0] if acc else ""
+        acc = str(acc).strip()
+        if acc:
+            missing.setdefault(acc, []).append(entry)
+
+    if not missing:
+        return 0
+
+    log.info("  %s: backfilling broker_name for %d entries via ENA Portal API …",
+             domain, len(missing))
+    broker_map = fetch_broker_names(list(missing))
+
+    filled = 0
+    for acc, broker in broker_map.items():
+        for entry in missing.get(acc, ()):
+            entry.setdefault("fields", {})["broker_name"] = [broker]
+            filled += 1
+
+    log.info("  %s: recovered %d broker names for %d entries",
+             domain, len(broker_map), filled)
+    return filled
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Save
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -749,6 +815,8 @@ def fetch_and_save_domain(domain: str) -> int:
     log.info("=== fetch_and_save_domain: %s ===", domain)
     fields  = get_retrievable_fields(domain, cfg)
     entries = fetch_domain(domain, cfg, fields, safe_filter, abbrev_filter)
+    # Must run before save_domain(): the dashboard reads the saved JSON only.
+    backfill_broker_names(domain, entries)
     save_domain(domain, entries, fields)
 
     # Partition checkpoint summary (files are retained so a re-run resumes)
