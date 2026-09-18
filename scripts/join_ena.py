@@ -65,7 +65,7 @@ from norwegian_filter import (
     get_cached_filter_tiers, FALSE_POSITIVE_RE,
 )
 from paths import RAW_DIR, PROC_DIR
-from ena_portal import fetch_broker_names, fetch_study_brokers
+from ena_portal import fetch_broker_names, fetch_study_attribution
 
 try:
     import requests as _requests
@@ -530,29 +530,42 @@ def main():
         else:
             log.info("  No dates recovered (offline or no matching experiments)")
 
-    # ── The study's own broker ────────────────────────────────────────────────
-    # EBI Search's sra-study domain exposes no broker_name, so this is the only
-    # place a study's real broker can come from.  It deliberately does NOT fall
-    # back to sample_brokers: a sample's broker is its INSDC mirroring
-    # provenance ("NCBI"/"DDBJ" — the archive the record came from), and
-    # promoting that to the study's broker both buried the ELIXIR-Norway
-    # studies and filled the dashboard with archive names that were never
-    # submission brokers.  A study with no broker of its own has none, and the
-    # R render falls back to its center_name.
+    # ── The study's own broker and center ─────────────────────────────────────
+    # EBI Search's sra-study domain carries neither: it has no broker_name at
+    # all, and center_project_name (read as center_name above) comes back empty
+    # for every study in practice.  The Portal's `study` result has both.
+    #
+    # The broker deliberately does NOT fall back to sample_brokers: a sample's
+    # broker is its INSDC mirroring provenance ("NCBI"/"DDBJ" — the archive the
+    # record was copied from), and promoting that to the study's broker both
+    # buried the ELIXIR-Norway studies and filled the dashboard with archive
+    # names that were never submission brokers.  A study with no broker of its
+    # own has none, and the R render falls back to its center_name — which is
+    # why center_name has to be filled here too, or dropping the inherited
+    # broker would leave those studies with no attribution at all.
     study_accs = [a for a in df_nor["study_acc"].dropna().tolist() if a]
     df_nor["study_broker"] = ""
     if study_accs:
-        log.info("  Looking up own broker_name for %d Norwegian studies …",
-                 len(study_accs))
-        study_broker_map = fetch_study_brokers(study_accs)
-        if study_broker_map:
-            df_nor["study_broker"] = (
-                df_nor["study_acc"].map(study_broker_map).fillna("")
-            )
-            log.info("  %d / %d studies have a broker of their own",
-                     len(study_broker_map), len(study_accs))
+        log.info("  Looking up own broker_name/center_name for %d Norwegian "
+                 "studies …", len(study_accs))
+        attribution = fetch_study_attribution(study_accs)
+        if attribution:
+            brokers = {a: v["broker_name"] for a, v in attribution.items()
+                       if v.get("broker_name")}
+            centers = {a: v["center_name"] for a, v in attribution.items()
+                       if v.get("center_name")}
+            df_nor["study_broker"] = df_nor["study_acc"].map(brokers).fillna("")
+            # Only fill where the fetch left center_name blank, so a value the
+            # pipeline did collect is never overwritten by the Portal's.
+            existing = df_nor["center_name"].fillna("").astype(str)
+            filled = df_nor["study_acc"].map(centers).fillna("")
+            df_nor["center_name"] = existing.where(existing.str.strip() != "",
+                                                   filled)
+            log.info("  %d / %d studies have a broker of their own; "
+                     "%d center names recovered",
+                     len(brokers), len(study_accs), len(centers))
         else:
-            log.info("  No study brokers recovered (offline or none on record)")
+            log.info("  No study attribution recovered (offline or none on record)")
 
     # ── Serialise ─────────────────────────────────────────────────────────────
     output_cols = {

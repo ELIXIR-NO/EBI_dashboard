@@ -147,7 +147,7 @@ def test_fetch_broker_names_batches_and_survives_a_failed_batch(monkeypatch):
     assert result == {"S3": "ELIXIR-Norway"}
 
 
-def test_fetch_study_brokers_falls_back_to_the_primary_accession_column(monkeypatch):
+def test_fetch_study_attribution_falls_back_to_the_primary_accession_column(monkeypatch):
     # Joined study accessions are mostly secondary (ERP/SRP/DRP) but some are
     # primary (PRJ…), and the Portal keys those on different columns.  What the
     # secondary column does not resolve must be retried against the primary one,
@@ -159,38 +159,47 @@ def test_fetch_study_brokers_falls_back_to_the_primary_accession_column(monkeypa
         if data["fields"].startswith("secondary_study_accession"):
             return _FakeResponse([
                 {"secondary_study_accession": "ERP0001",
-                 "broker_name": "ELIXIR-Norway"},
+                 "broker_name": "ELIXIR-Norway", "center_name": "NIPH"},
             ])
         return _FakeResponse([
-            {"study_accession": "PRJEB0002", "broker_name": "ELIXIR-Norway"},
+            {"study_accession": "PRJEB0002",
+             "broker_name": "ELIXIR-Norway", "center_name": "UiB"},
         ])
 
     monkeypatch.setattr(ena_portal, "_REQUESTS_AVAILABLE", True)
     monkeypatch.setattr(ena_portal, "requests",
                         type("R", (), {"post": staticmethod(fake_post)}))
 
-    result = ena_portal.fetch_study_brokers(["ERP0001", "PRJEB0002"])
+    result = ena_portal.fetch_study_attribution(["ERP0001", "PRJEB0002"])
 
-    assert result == {"ERP0001": "ELIXIR-Norway", "PRJEB0002": "ELIXIR-Norway"}
+    assert result == {
+        "ERP0001":   {"broker_name": "ELIXIR-Norway", "center_name": "NIPH"},
+        "PRJEB0002": {"broker_name": "ELIXIR-Norway", "center_name": "UiB"},
+    }
     # The second call retries only what the first left unresolved.
     assert "ERP0001" in calls[0] and "PRJEB0002" in calls[0]
     assert "ERP0001" not in calls[1] and "PRJEB0002" in calls[1]
 
 
-def test_fetch_study_brokers_omits_studies_with_no_broker(monkeypatch):
-    # A study ENA records no broker for must be absent from the map, so the
-    # caller leaves it empty and the render falls back to center_name.
+def test_fetch_study_attribution_reports_blank_broker_and_center(monkeypatch):
+    # A study ENA records no broker for still resolves — with an empty broker
+    # and whatever center_name it has, which is what the render falls back to.
     def fake_post(url, data, timeout):
         return _FakeResponse([
-            {"secondary_study_accession": "ERP0001", "broker_name": ""},
-            {"secondary_study_accession": "ERP0002", "broker_name": None},
+            {"secondary_study_accession": "ERP0001", "broker_name": "",
+             "center_name": "University of Oslo"},
+            {"secondary_study_accession": "ERP0002", "broker_name": None,
+             "center_name": None},
         ])
 
     monkeypatch.setattr(ena_portal, "_REQUESTS_AVAILABLE", True)
     monkeypatch.setattr(ena_portal, "requests",
                         type("R", (), {"post": staticmethod(fake_post)}))
 
-    assert ena_portal.fetch_study_brokers(["ERP0001", "ERP0002"]) == {}
+    assert ena_portal.fetch_study_attribution(["ERP0001", "ERP0002"]) == {
+        "ERP0001": {"broker_name": "", "center_name": "University of Oslo"},
+        "ERP0002": {"broker_name": "", "center_name": ""},
+    }
 
 
 def test_load_samples_backfills_broker_only_where_missing(tmp_path, monkeypatch):
