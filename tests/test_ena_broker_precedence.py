@@ -20,18 +20,29 @@ SRA_SAMPLES = {
     ]
 }
 
+# A study's broker is its own `study_broker` (ENA Portal), never one inherited
+# from its samples.  ERP0003 is the case that drove the change: its samples
+# carry "NCBI" — INSDC mirroring provenance, not a submission broker — which
+# used to be promoted onto the study and shown as its broker.
 ENA_JOINED = {
     "join_date": "2026-01-01",
-    "study_count": 2,
+    "study_count": 3,
     "entries": [
-        {"accession": "ERP0001", "title": "study with sample broker",
-         "center_name": "University of Bergen", "first_public_date": "20240301",
+        {"accession": "ERP0001", "title": "study brokered by ELIXIR-Norway",
+         "center_name": "University of Bergen", "study_broker": "ELIXIR-Norway",
+         "first_public_date": "20240301",
          "sample_countries": ["Norway"], "sample_centers": ["University of Bergen"],
-         "sample_brokers": ["ELIXIR-Norway"], "n_experiments": 2},
-        {"accession": "ERP0002", "title": "study without sample broker",
-         "center_name": "University of Oslo", "first_public_date": "20240401",
+         "sample_brokers": [], "n_experiments": 2},
+        {"accession": "ERP0002", "title": "study with no broker at all",
+         "center_name": "University of Oslo", "study_broker": "",
+         "first_public_date": "20240401",
          "sample_countries": ["Norway"], "sample_centers": ["University of Oslo"],
          "sample_brokers": [], "n_experiments": 1},
+        {"accession": "ERP0003", "title": "study whose samples were mirrored from NCBI",
+         "center_name": "Nord University", "study_broker": "",
+         "first_public_date": "20240501",
+         "sample_countries": ["Norway"], "sample_centers": ["Nord University"],
+         "sample_brokers": ["NCBI"], "n_experiments": 3},
     ],
 }
 
@@ -62,6 +73,9 @@ def test_center_never_overwrites_broker_for_ena_entries(isolated_repo):
       # … and the center is still the fallback when there is no broker.
       stopifnot(identical(unname(brk["SAMEA2"]), "University of Oslo"))
       stopifnot(identical(unname(brk["ERP0002"]), "University of Oslo"))
+      # A sample-level broker is never promoted onto the study: ERP0003 falls
+      # back to its center rather than reporting the "NCBI" its samples carry.
+      stopifnot(identical(unname(brk["ERP0003"]), "Nord University"))
       # Helper columns must not leak into the output schema.
       stopifnot(!any(c("ena_broker", "ena_center") %in% names(df)))
       cat("broker precedence ok\\n")

@@ -505,25 +505,30 @@ dedupe_by_accession <- function(df) {
 #' here is already confirmed Norwegian.  The is_norwegian() guard is removed
 #' to avoid silent drops.  email is NA for ENA rows (not available post-join).
 parse_ena_row <- function(row) {
-  # join_ena.py outputs: accession, title, center_name, first_public_date,
-  # sample_countries (list), sample_centers (list), sample_brokers (list),
-  # n_experiments.
+  # join_ena.py outputs: accession, title, center_name, study_broker,
+  # first_public_date, sample_countries (list), sample_centers (list),
+  # sample_brokers (list), n_experiments.
   affil_vals   <- c(row$center_name, unlist(row$sample_centers))
   country_vals <- unlist(row$sample_countries)
 
-  # Broker: sra-study carries no broker_name of its own, so inherit the broker
-  # from the study's joined samples (sample_brokers, surfaced by join_ena.py).
+  # Broker: the study's OWN broker_name, looked up from ENA's Portal API by
+  # join_ena.py (EBI Search's sra-study domain exposes no such field).
+  #
+  # sample_brokers is deliberately NOT consulted here.  A sample's broker is
+  # its INSDC mirroring provenance — "NCBI"/"DDBJ", the archive the record was
+  # copied from — so inheriting it onto the study labelled ~730 studies with
+  # an archive that was never their submission broker, while the studies ENA
+  # genuinely brokers as ELIXIR-Norway showed nothing at all.  A study with no
+  # broker of its own has none; ena_center then supplies the fallback.
+  # (sample_brokers is still carried in the JSON: it is a Norwegian-identity
+  # signal for join_ena.py's filter, and drives the sra-sample rows' own
+  # broker, where a sample's broker legitimately belongs to that sample.)
+  #
   # The study's own center_name is kept in a SEPARATE column rather than being
   # collapsed in here: broker-over-center precedence is applied once, in
   # load_all_data(), after dedupe_by_accession(), so a center can never
   # overwrite a broker at any stage.
-  sample_brokers <- unlist(row$sample_brokers)
-  sample_brokers <- sample_brokers[!is.na(sample_brokers) & nzchar(sample_brokers)]
-  broker_val <- if (length(sample_brokers) > 0L) {
-    sample_brokers[[1L]]
-  } else {
-    NA_character_
-  }
+  broker_val <- blank_to_na(row$study_broker)
 
   # first_public_date from sra-experiment (earliest across experiments for the study).
   # Format is YYYYMMDD compact — handled by parse_ebi_date().
