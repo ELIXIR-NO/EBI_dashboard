@@ -32,8 +32,13 @@
 
 ## Architecture
 
+The pipeline itself is a Snakemake DAG (`workflow/Snakefile`) that runs on a
+compute server.  GitHub Actions only starts it and publishes the results — see
+[GitHub Actions workflows](#github-actions-workflows).
+
 ```
-GitHub Actions (cron 02:30 UTC)
+snakemake --profile workflow/profiles/local   (on the compute server,
+                                               launched by launch.yml)
 │
 ├─ scripts/fetch_ebi_data.py
 │    ├─ Queries EBI Search REST API  (GET /ws/rest/{domain}?query=Norway…)
@@ -82,11 +87,10 @@ no identifiers.org namespace, so they are left unlinked.
 
 | File | Description |
 |---|---|
-| `output/01_overview_by_year.png` | Stacked bar: entries per year, coloured by repository |
-| `output/02_by_institution_all.png` | Faceted bar: entries per institution, one panel per repository |
-| `output/03_time_year_by_domain.png` | Grouped bars: year × domain |
-| `output/04_time_quarter_by_inst.png` | Quarterly trend, coloured by institution |
-| `output/norwegian_entries.csv` | Flat export of all matched entries |
+| `output/norwegian_ebi_year.png` | Entries over time, faceted by repository and coloured by institution — yearly resolution |
+| `output/norwegian_ebi_quarter.png` | Same plot, quarterly resolution |
+| `output/norwegian_ebi_month.png` | Same plot, monthly resolution |
+| `output/norwegian_entries.csv` | Flat export of all matched entries (also the Shinylive app's data source) |
 
 ---
 
@@ -189,14 +193,55 @@ Both apps expose the same controls:
 
 ## GitHub Actions workflows
 
+The heavy lifting happens on a compute server, not on the GitHub runner: the
+fetch stage downloads tens of millions of records and would blow past the hosted
+runner's time and disk limits.  Actions therefore does two small jobs — start
+the run over SSH, and publish the results once it finishes.
+
 | Workflow | Trigger | Description |
 |---|---|---|
-| `01_fetch_data.yml` | cron 02:30 UTC + manual | Runs fetch + join scripts, commits data, triggers plot workflow |
-| `02_render_plots.yml` | called by #01 + manual | Installs R deps, renders plots, commits output/ |
+| `launch.yml` | cron Mon 03:00 UTC + push to `main` + manual | Syncs the server to `origin/main`, clears derived artefacts, fires Snakemake detached over SSH |
+| `publish.yml` | cron every 3 h + manual | Polls for the `output/.run_complete` sentinel; on finding it, validates the results, copies them back, deploys the Shinylive app to GitHub Pages and commits the artefacts to `main` |
 
-Both workflows require the default `GITHUB_TOKEN` with **write** access to
-`contents` (enabled automatically in public repos; check repo Settings →
-Actions → General if you have issues).
+### Push triggers and from-scratch runs
+
+A push to `main` starts a run immediately.  What survives that run depends on
+what was pushed:
+
+| Pushed paths | Behaviour |
+|---|---|
+| `scripts/**`, `workflow/**`, `requirements.txt`, `data/institution_map.json` | **From scratch** — `data/raw/` (partitions + manifests), `data/processed/`, `data/domains.json` and `data/identifiers_namespaces.json` are wiped on the server, so every domain is re-downloaded |
+| `R/**`, `shiny/**` | Normal incremental run; the fetch cache is reused |
+| anything else (`README.md`, `tests/**`, `output/**`) | No run |
+
+The first group is the code that *writes* the persistent cache.  Partitions for
+years ≤ `current_year - 2` are otherwise served straight off disk and only
+re-fetched when their sha256 or `FILTER_VERSION` check fails, so a change to the
+filtering or pagination logic that forgets to bump `FILTER_VERSION` would be
+masked by stale partitions indefinitely.  Wiping the cache removes that failure
+mode.  The same rebuild can be requested by hand with the `from_scratch` input
+on a manual dispatch.
+
+`publish.yml` commits the run's own results back to `main`; those pushes must
+not start another run.  Three things prevent it: none of the paths it commits
+(`output/`, `data/processed/`, `data/domains.json`,
+`data/identifiers_namespaces.json`) match `launch.yml`'s `paths:` filter; a
+job-level guard skips pushes from `github-actions[bot]`; and pushes made with
+the default `GITHUB_TOKEN` do not start workflows at all.
+
+### Requirements
+
+`publish.yml` needs the default `GITHUB_TOKEN` with **write** access to
+`contents` and `pages` (check repo Settings → Actions → General if you have
+issues), plus GitHub Pages set to deploy from Actions.  Both workflows need
+these secrets for the SSH connection to the compute server:
+
+| Secret | Meaning |
+|---|---|
+| `SSH_PRIVATE_KEY` | Private half of the key pair authorised on the server |
+| `REMOTE_HOST` | Server hostname or IP |
+| `REMOTE_USER` | Linux user on the server |
+| `REMOTE_WORKDIR` | Absolute path to the repo checkout on the server |
 
 ---
 
@@ -264,9 +309,19 @@ skipped, and the pipeline continues with whatever attribution it already had.
 
 ## Data refresh cadence
 
-By default the workflow runs once per day at 02:30 UTC. To change, edit the
-`cron` line in `.github/workflows/01_fetch_data.yml`.
+A full run starts every Monday at 03:00 UTC, and on any push to `main` that
+touches pipeline code.  To change the schedule, edit the `cron` line in
+`.github/workflows/launch.yml`.  `publish.yml` polls every 3 hours for a
+finished run, so results appear within 3 hours of the pipeline completing.
 
-The dated raw snapshots (e.g. `data/raw/pride/2026-05-18.json`) are excluded
-from git (see `.gitignore`) to keep the repository lean; only `latest.json`
-per domain is committed.
+Within a run the fetch stage is incremental: years ≤ `current_year - 2` are
+served from sha256-verified partition files under
+`data/raw/<domain>/partitions/`, while the current and previous year are always
+re-fetched.  See [Push triggers and from-scratch
+runs](#push-triggers-and-from-scratch-runs) for when that cache is discarded.
+
+Nothing under `data/raw/` is committed — it is excluded wholesale by
+`.gitignore` to keep the repository lean, and lives only on the compute server.
+The artefacts that *are* committed back to `main` by `publish.yml` are
+`data/processed/ena_joined.json`, `data/domains.json`,
+`data/identifiers_namespaces.json` and `output/`.
