@@ -1,11 +1,38 @@
 name: Launch pipeline
 
 # ── Trigger ───────────────────────────────────────────────────────────────────
-# Weekly schedule + manual dispatch.
+# Weekly schedule + manual dispatch + pushes to main that touch pipeline code.
 # The pipeline runs detached on the compute node; this job only starts it.
+#
+# A push to main starts a run immediately.  How much of the cache survives that
+# run depends on *what* was pushed (see the "Classify the run" step):
+#
+#   scripts/**, workflow/**, requirements.txt, data/institution_map.json
+#       → these produce the persistent data (data/raw partitions + manifests,
+#         data/processed).  Cached partitions were written by the *old* code, so
+#         the run starts from scratch: the whole cache is wiped and every domain
+#         is re-downloaded.
+#   R/**, shiny/**
+#       → render-only.  Normal incremental run; the fetch cache is reused.
+#
+# Pushes made by the publish workflow (it commits the run's own results back to
+# main as github-actions[bot]) are ignored — see the job-level `if`.
 on:
   schedule:
     - cron: "0 3 * * 1"   # every Monday 03:00 UTC
+  push:
+    branches: [main]
+    paths:
+      # Persistent-data code → from-scratch run.
+      - "scripts/**"
+      - "workflow/**"
+      - "requirements.txt"
+      - "data/institution_map.json"
+      # Render-only code → normal incremental run.
+      - "R/**"
+      - "shiny/**"
+      # This file itself, so trigger changes are exercised on landing.
+      - ".github/workflows/launch.yml"
   workflow_dispatch:
     inputs:
       reason:
@@ -16,6 +43,18 @@ on:
         description: "Force re-run even if a run is already active"
         type: boolean
         default: false
+      from_scratch:
+        description: "Discard the fetch cache and re-download every domain"
+        type: boolean
+        default: false
+
+# ── Concurrency ───────────────────────────────────────────────────────────────
+# A burst of pushes must not fire several Snakemake processes at the same
+# workdir.  Runs queue instead of overlapping; the lock guard below then makes
+# the queued one a no-op if the first is still fetching.
+concurrency:
+  group: launch-pipeline
+  cancel-in-progress: false
 
 # ── Permissions ───────────────────────────────────────────────────────────────
 permissions:
@@ -33,7 +72,60 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5    # this job should complete in seconds
 
+    # Ignore the publish workflow's own commits ("dashboard: weekly update …",
+    # pushed as github-actions[bot]): those carry the results of a finished run,
+    # so relaunching on them would loop.  A push made with the default
+    # GITHUB_TOKEN does not start workflows at all, and those commits touch only
+    # output/ and data/processed/ which the paths filter excludes — this check
+    # is the third layer, and the one that still holds if publish.yml ever
+    # switches to a PAT or deploy key.
+    if: >-
+      github.event_name != 'push' ||
+      (github.actor != 'github-actions[bot]' &&
+       github.event.pusher.name != 'github-actions[bot]')
+
     steps:
+      - name: Checkout (for the changed-file diff)
+        if: github.event_name == 'push'
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0    # `before` may be many commits back
+
+      - name: Classify the run
+        id: classify
+        run: |
+          # scratch=yes means: wipe the persistent fetch cache before firing
+          # Snakemake, so the run rebuilds data/raw and data/processed from the
+          # APIs instead of serving immutable years off disk.
+          SCRATCH=no
+          if [ "${{ github.event_name }}" = "push" ]; then
+            BEFORE="${{ github.event.before }}"
+            if ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+              # Force-push, first push on the branch, or a commit that has been
+              # garbage-collected: the diff is unknowable, so take the safe
+              # route and rebuild.
+              echo "Cannot resolve ${BEFORE} – assuming persistent-data code changed."
+              SCRATCH=yes
+            else
+              CHANGED=$(git diff --name-only "${BEFORE}" "${{ github.sha }}")
+              echo "Changed files:"
+              echo "${CHANGED}" | sed 's/^/  /'
+              # Keep this pattern in step with the persistent-data half of the
+              # paths filter at the top of this file.
+              if echo "${CHANGED}" | grep -qE '^(scripts/|workflow/|requirements\.txt$|data/institution_map\.json$)'; then
+                SCRATCH=yes
+              fi
+            fi
+          elif [ "${{ inputs.from_scratch }}" = "true" ]; then
+            SCRATCH=yes
+          fi
+          echo "scratch=${SCRATCH}" >> "$GITHUB_OUTPUT"
+          if [ "${SCRATCH}" = "yes" ]; then
+            echo "::notice::Persistent-data code affected – running from scratch (full re-fetch)."
+          else
+            echo "Incremental run – the fetch cache on the server is reused."
+          fi
+
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
@@ -44,18 +136,26 @@ jobs:
             >> ~/.ssh/config
 
       - name: Guard against overlapping runs
-        if: ${{ !inputs.force_rerun }}
+        id: guard
         run: |
           # If a Snakemake lock file exists the previous run is still active.
-          # Exit cleanly (not a failure) to avoid double-running.
-          ACTIVE=$(ssh "${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}" \
-            "test -f '${{ secrets.REMOTE_WORKDIR }}/.snakemake/lock' && echo yes || echo no")
-          if [ "$ACTIVE" = "yes" ]; then
-            echo "A Snakemake run is already active on the server – skipping launch."
+          # Record that as an output and let every later step skip: a bare
+          # `exit 0` here would end this step successfully and then fire
+          # Snakemake anyway, which is exactly what the guard exists to stop.
+          if [ "${{ inputs.force_rerun }}" = "true" ]; then
+            echo "force_rerun requested – ignoring any active run."
+            echo "active=no" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          
+          ACTIVE=$(ssh "${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}" \
+            "test -f '${{ secrets.REMOTE_WORKDIR }}/.snakemake/lock' && echo yes || echo no")
+          echo "active=${ACTIVE}" >> "$GITHUB_OUTPUT"
+          if [ "$ACTIVE" = "yes" ]; then
+            echo "::warning::A Snakemake run is already active on the server – skipping launch. Re-dispatch with force_rerun once it finishes if this push must run now."
+          fi
+
       - name: Pull latest code on server
+        if: steps.guard.outputs.active != 'yes'
         run: |
           # set -e + an explicit clone-vs-pull branch: if WORKDIR exists but is
           # not a git repo, fail loudly here instead of falling through to fire
@@ -97,7 +197,23 @@ jobs:
                }
              '"
 
+      - name: Verify the server is on the pushed commit
+        if: steps.guard.outputs.active != 'yes' && github.event_name == 'push'
+        run: |
+          # The point of a push-triggered run is to exercise the pushed code.
+          # If origin/main has already moved on (a later push landed while this
+          # job was queued behind the concurrency group), say so rather than
+          # silently attributing the run to the wrong commit.
+          SERVER_SHA=$(ssh "${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}" \
+            "git -C '${{ secrets.REMOTE_WORKDIR }}' rev-parse HEAD")
+          echo "Server HEAD: ${SERVER_SHA}"
+          echo "This push:   ${{ github.sha }}"
+          if [ "${SERVER_SHA}" != "${{ github.sha }}" ]; then
+            echo "::warning::Server checked out ${SERVER_SHA}, newer than this push (${{ github.sha }}). The run covers the newer code."
+          fi
+
       - name: Clear sentinel and derived artefacts
+        if: steps.guard.outputs.active != 'yes'
         run: |
           # The pull step above hard-resets the server tree to origin/main,
           # which *restores* the committed artefacts (output/*.csv,
@@ -108,15 +224,51 @@ jobs:
           # Deleting them here makes a real render the only way to satisfy the
           # DAG, so a silent no-op run becomes impossible.
           #
-          # data/raw/ and data/processed/ are deliberately NOT touched: they
-          # are the incremental fetch cache, and the fetch scripts decide for
-          # themselves what actually needs re-downloading.
+          # data/raw/ and data/processed/ are deliberately NOT touched here:
+          # they are the incremental fetch cache, and the fetch scripts decide
+          # for themselves what actually needs re-downloading.  The next step
+          # is the one case where that cache must go.
           ssh "${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}" \
             "cd '${{ secrets.REMOTE_WORKDIR }}' && \
              rm -f output/.run_complete output/*.csv output/*.png && \
              rm -rf docs"
 
+      - name: Wipe persistent data cache (from-scratch run)
+        if: steps.guard.outputs.active != 'yes' && steps.classify.outputs.scratch == 'yes'
+        run: |
+          # The code that *wrote* the cache just changed, so every cached
+          # artefact is suspect:
+          #   data/raw/<domain>/partitions/*.json  per-window checkpoints, only
+          #                                        ever re-fetched when their
+          #                                        year is mutable or the
+          #                                        sha256/FILTER_VERSION check
+          #                                        fails — a filter change with
+          #                                        no FILTER_VERSION bump would
+          #                                        otherwise be served from disk
+          #                                        for immutable years forever.
+          #   data/raw/<domain>/manifest.json      the bookkeeping that decides
+          #                                        the above.
+          #   data/raw/<domain>/latest.json        per-domain fetch result.
+          #   data/processed/                      join output.
+          #   data/domains.json                    tracked, so the pull step's
+          #                                        `reset --hard` restores the
+          #                                        committed copy and prunes
+          #                                        write_domains_json from the
+          #                                        DAG (that rule has no
+          #                                        run_date rerun trigger, so
+          #                                        deleting it is the only way
+          #                                        to regenerate it).
+          #   data/identifiers_namespaces.json     also tracked; fetch_identifiers
+          #                                        does re-run daily on its own,
+          #                                        so this one is belt and braces.
+          # Removing them leaves the APIs as the only way to satisfy the DAG.
+          ssh "${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}" \
+            "set -e && cd '${{ secrets.REMOTE_WORKDIR }}' && \
+             rm -rf data/raw data/processed data/domains.json data/identifiers_namespaces.json && \
+             echo 'Persistent data cache wiped – this run re-downloads every domain.'"
+
       - name: Fire Snakemake (detached)
+        if: steps.guard.outputs.active != 'yes'
         run: |
           # nohup + & + redirected I/O ensures the process outlives the SSH session.
           # --resources ebi_conns=4 caps concurrent EBI download jobs to 4.
@@ -132,3 +284,17 @@ jobs:
                --restart-times 3 \
                > logs/snakemake_${RUN_DATE}.log 2>&1 &
              echo \"Snakemake PID \$! launched — run log: logs/snakemake_${RUN_DATE}.log\""
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Launch pipeline"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Trigger | \`${{ github.event_name }}\` |"
+            echo "| Commit | \`${{ github.sha }}\` |"
+            echo "| Mode | ${{ steps.classify.outputs.scratch == 'yes' && 'from scratch (full re-fetch)' || 'incremental (cache reused)' }} |"
+            echo "| Launched | ${{ steps.guard.outputs.active == 'yes' && 'no — a run was already active' || 'yes' }} |"
+          } >> "$GITHUB_STEP_SUMMARY"

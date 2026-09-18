@@ -56,13 +56,21 @@ rule write_domains_json:
     """
     Write data/domains.json from the Python DOMAINS dict.
 
-    data/domains.json is gitignored (auto-generated) so it is always absent
-    after a fresh git pull, which is sufficient to trigger this rule.  The
-    file is an informational snapshot for humans and the fetch_domain ordering
-    dependency — fetch_one_domain.py reads config directly from the DOMAINS
-    dict in fetch_ebi_data.py, not from this file.
+    The file is an informational snapshot for humans and the fetch_domain
+    ordering dependency — fetch_one_domain.py reads config directly from the
+    DOMAINS dict in fetch_ebi_data.py, not from this file.
+
+    data/domains.json is tracked in git (publish.yml commits the snapshot back
+    to main), so on the persistent server workdir it is always present: the
+    launch job's `reset --hard` restores the committed copy, Snakemake sees the
+    output already there and prunes this rule.  Without a rerun trigger the
+    snapshot would then never be refreshed and could drift from DOMAINS
+    indefinitely.  params.run_date changes daily so the rule re-runs each day —
+    same device as fetch_domain, fetch_ega and fetch_identifiers.
     """
     output: "data/domains.json"
+    params:
+        run_date = lambda wc: __import__("datetime").date.today().isoformat()
     shell:
         "python3 scripts/fetch_ebi_data.py --list-domains"
 
