@@ -136,8 +136,12 @@ def fetch_study_attribution(study_accs: list[str],
     Accessions may be secondary (ERP/SRP/DRP) or primary (PRJ…): the Portal
     keys those on different columns, so the secondary column is tried first
     and whatever it leaves unresolved is retried against the primary one.
-    Returns {accession_as_passed_in: {"broker_name": …, "center_name": …}},
-    with either value possibly "" when ENA holds none.
+    `first_public` (ISO YYYY-MM-DD) comes back on the same call: a study with
+    no experiments left in the join has no date either, and the render drops
+    undated rows — which silently hid several ELIXIR-Norway studies.
+
+    Returns {accession_as_passed_in: {"broker_name": …, "center_name": …,
+    "first_public": …}}, with any value possibly "" when ENA holds none.
     """
     if not _REQUESTS_AVAILABLE:
         log.warning("requests not installed – cannot look up ENA study attribution")
@@ -147,7 +151,7 @@ def fetch_study_attribution(study_accs: list[str],
     if not accs:
         return {}
 
-    fields = ["broker_name", "center_name"]
+    fields = ["broker_name", "center_name", "first_public"]
     result = _fetch_fields_by("study", "secondary_study_accession", fields,
                               accs, batch_size)
     remaining = [a for a in accs if a not in result]

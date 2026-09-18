@@ -159,11 +159,13 @@ def test_fetch_study_attribution_falls_back_to_the_primary_accession_column(monk
         if data["fields"].startswith("secondary_study_accession"):
             return _FakeResponse([
                 {"secondary_study_accession": "ERP0001",
-                 "broker_name": "ELIXIR-Norway", "center_name": "NIPH"},
+                 "broker_name": "ELIXIR-Norway", "center_name": "NIPH",
+                 "first_public": "2024-06-13"},
             ])
         return _FakeResponse([
             {"study_accession": "PRJEB0002",
-             "broker_name": "ELIXIR-Norway", "center_name": "UiB"},
+             "broker_name": "ELIXIR-Norway", "center_name": "UiB",
+             "first_public": "2025-07-23"},
         ])
 
     monkeypatch.setattr(ena_portal, "_REQUESTS_AVAILABLE", True)
@@ -173,7 +175,8 @@ def test_fetch_study_attribution_falls_back_to_the_primary_accession_column(monk
     result = ena_portal.fetch_study_attribution(["ERP0001", "PRJEB0002"])
 
     assert result == {
-        "ERP0001":   {"broker_name": "ELIXIR-Norway", "center_name": "NIPH"},
+        "ERP0001":   {"broker_name": "ELIXIR-Norway", "center_name": "NIPH",
+                 "first_public": "2024-06-13"},
         "PRJEB0002": {"broker_name": "ELIXIR-Norway", "center_name": "UiB"},
     }
     # The second call retries only what the first left unresolved.
@@ -187,9 +190,9 @@ def test_fetch_study_attribution_reports_blank_broker_and_center(monkeypatch):
     def fake_post(url, data, timeout):
         return _FakeResponse([
             {"secondary_study_accession": "ERP0001", "broker_name": "",
-             "center_name": "University of Oslo"},
+             "center_name": "University of Oslo", "first_public": "2024-01-01"},
             {"secondary_study_accession": "ERP0002", "broker_name": None,
-             "center_name": None},
+             "center_name": None, "first_public": None},
         ])
 
     monkeypatch.setattr(ena_portal, "_REQUESTS_AVAILABLE", True)
@@ -197,8 +200,9 @@ def test_fetch_study_attribution_reports_blank_broker_and_center(monkeypatch):
                         type("R", (), {"post": staticmethod(fake_post)}))
 
     assert ena_portal.fetch_study_attribution(["ERP0001", "ERP0002"]) == {
-        "ERP0001": {"broker_name": "", "center_name": "University of Oslo"},
-        "ERP0002": {"broker_name": "", "center_name": ""},
+        "ERP0001": {"broker_name": "", "center_name": "University of Oslo",
+                    "first_public": "2024-01-01"},
+        "ERP0002": {"broker_name": "", "center_name": "", "first_public": ""},
     }
 
 

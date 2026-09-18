@@ -561,6 +561,22 @@ def main():
             filled = df_nor["study_acc"].map(centers).fillna("")
             df_nor["center_name"] = existing.where(existing.str.strip() != "",
                                                    filled)
+            # Studies whose experiments all dropped out of the join have no
+            # first_public_date, and the render drops undated rows — which hid
+            # several ELIXIR-Norway studies outright.  _fetch_study_dates()
+            # above cannot help there (it queries sra-experiment, and these
+            # have none), but the Portal carries the study's own date.
+            dates = {a: v["first_public"].replace("-", "")
+                     for a, v in attribution.items() if v.get("first_public")}
+            fpd_now = df_nor["first_public_date"].fillna("").astype(str)
+            still_undated = fpd_now.str.strip() == ""
+            if still_undated.any() and dates:
+                recovered = df_nor["study_acc"].map(dates).fillna("")
+                df_nor["first_public_date"] = fpd_now.where(~still_undated,
+                                                            recovered)
+                log.info("  Recovered dates for %d further studies from the "
+                         "Portal", int((recovered[still_undated] != "").sum()))
+
             log.info("  %d / %d studies have a broker of their own; "
                      "%d center names recovered",
                      len(brokers), len(study_accs), len(centers))
