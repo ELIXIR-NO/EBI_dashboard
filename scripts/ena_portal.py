@@ -42,18 +42,19 @@ BROKER_BATCH = 1000
 RATE_SLEEP = 0.2
 
 
-def _fetch_brokers_by(result_type: str, key_field: str, accs: list[str],
-                      batch_size: int) -> dict[str, str]:
+def _fetch_fields_by(result_type: str, key_field: str, fields: list[str],
+                     accs: list[str], batch_size: int) -> dict[str, dict]:
     """
-    POST `accs` to the Portal in batches, asking `result_type` for broker_name
-    keyed on `key_field`.  Returns {accession: broker_name} for the accessions
-    that resolved to a non-empty broker; everything else is simply absent.
+    POST `accs` to the Portal in batches, asking `result_type` for `fields`
+    keyed on `key_field`.  Returns {accession: {field: value}} for every
+    accession that resolved, with values stripped.
 
     Best-effort: a batch that errors is logged and skipped, so a network blip
     costs that batch's attribution rather than the whole lookup.
     """
-    result: dict[str, str] = {}
+    result: dict[str, dict] = {}
     n_batches = (len(accs) + batch_size - 1) // batch_size
+    field_spec = ",".join([key_field] + fields)
 
     for i in range(0, len(accs), batch_size):
         batch = accs[i: i + batch_size]
@@ -64,7 +65,7 @@ def _fetch_brokers_by(result_type: str, key_field: str, accs: list[str],
                 data={
                     "result": result_type,
                     "query":  query,
-                    "fields": f"{key_field},broker_name",
+                    "fields": field_spec,
                     "format": "json",
                     "limit":  str(len(batch)),
                 },
@@ -73,15 +74,14 @@ def _fetch_brokers_by(result_type: str, key_field: str, accs: list[str],
             resp.raise_for_status()
             data = resp.json() or []
         except Exception as exc:
-            log.warning("    %s broker lookup batch %d/%d failed: %s",
+            log.warning("    %s lookup batch %d/%d failed: %s",
                         result_type, i // batch_size + 1, n_batches, exc)
             continue
 
         for entry in data:
-            acc    = (entry.get(key_field) or "").strip()
-            broker = (entry.get("broker_name") or "").strip()
-            if acc and broker:
-                result[acc] = broker
+            acc = (entry.get(key_field) or "").strip()
+            if acc:
+                result[acc] = {f: (entry.get(f) or "").strip() for f in fields}
 
         if i + batch_size < len(accs):
             time.sleep(RATE_SLEEP)
@@ -111,42 +111,47 @@ def fetch_broker_names(sample_accs: list[str],
     if not accs:
         return {}
 
-    return _fetch_brokers_by("sample", "sample_accession", accs, batch_size)
+    rows = _fetch_fields_by("sample", "sample_accession", ["broker_name"],
+                            accs, batch_size)
+    return {acc: r["broker_name"] for acc, r in rows.items() if r["broker_name"]}
 
 
-def fetch_study_brokers(study_accs: list[str],
-                        batch_size: int = BROKER_BATCH) -> dict[str, str]:
+def fetch_study_attribution(study_accs: list[str],
+                            batch_size: int = BROKER_BATCH) -> dict[str, dict]:
     """
-    Look up a study's OWN broker_name via ENA's Portal API.
+    Look up a study's OWN broker_name and center_name via ENA's Portal API.
 
-    Why this exists: EBI Search's sra-study domain exposes no broker_name at
-    all, which the join step used to read as "studies have no broker" and work
-    around by inheriting one from the study's samples.  That inference is
-    wrong twice over — it misses the studies ENA really does record a broker
-    for (the 'ELIXIR-Norway' ones the dashboard is meant to surface), and for
-    everything else it promotes the sample's INSDC mirroring provenance
-    ('NCBI', 'DDBJ' — the archive the record came from) into a submission
-    broker it never was.  The Portal's `study` result carries the study's own
-    broker_name directly, so it is the honest source.
+    Why this exists: EBI Search's sra-study domain exposes neither field — it
+    has no broker_name at all, and its `center_project_name` (what the join
+    step reads as center_name) is empty for every study in practice.  The join
+    used to paper over both gaps by inheriting a broker from the study's
+    samples, which was wrong twice over: it missed the studies ENA really does
+    record a broker for (the 'ELIXIR-Norway' ones the dashboard is meant to
+    surface), and for everything else it promoted the sample's INSDC mirroring
+    provenance ('NCBI', 'DDBJ' — the archive the record was copied from) into a
+    submission broker it never was.  Dropping that inheritance without filling
+    center_name would leave the studies with no attribution at all, so both
+    fields come from the Portal's `study` result, which carries them directly.
 
     Accessions may be secondary (ERP/SRP/DRP) or primary (PRJ…): the Portal
     keys those on different columns, so the secondary column is tried first
     and whatever it leaves unresolved is retried against the primary one.
-    Returns {accession_as_passed_in: broker_name}, omitting studies with no
-    broker on record so the caller falls back to center_name for those.
+    Returns {accession_as_passed_in: {"broker_name": …, "center_name": …}},
+    with either value possibly "" when ENA holds none.
     """
     if not _REQUESTS_AVAILABLE:
-        log.warning("requests not installed – cannot look up ENA study brokers")
+        log.warning("requests not installed – cannot look up ENA study attribution")
         return {}
 
     accs = [a for a in dict.fromkeys(study_accs) if a]
     if not accs:
         return {}
 
-    result = _fetch_brokers_by("study", "secondary_study_accession",
-                               accs, batch_size)
+    fields = ["broker_name", "center_name"]
+    result = _fetch_fields_by("study", "secondary_study_accession", fields,
+                              accs, batch_size)
     remaining = [a for a in accs if a not in result]
     if remaining:
-        result.update(_fetch_brokers_by("study", "study_accession",
-                                        remaining, batch_size))
+        result.update(_fetch_fields_by("study", "study_accession", fields,
+                                       remaining, batch_size))
     return result
