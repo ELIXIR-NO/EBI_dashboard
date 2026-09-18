@@ -176,8 +176,9 @@ def test_fetch_study_attribution_falls_back_to_the_primary_accession_column(monk
 
     assert result == {
         "ERP0001":   {"broker_name": "ELIXIR-Norway", "center_name": "NIPH",
-                 "first_public": "2024-06-13"},
-        "PRJEB0002": {"broker_name": "ELIXIR-Norway", "center_name": "UiB"},
+                      "first_public": "2024-06-13"},
+        "PRJEB0002": {"broker_name": "ELIXIR-Norway", "center_name": "UiB",
+                      "first_public": "2025-07-23"},
     }
     # The second call retries only what the first left unresolved.
     assert "ERP0001" in calls[0] and "PRJEB0002" in calls[0]
