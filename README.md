@@ -225,6 +225,18 @@ The dashboard's **Broker** column shows the ENA `broker_name` (e.g.
 `ELIXIR-Norway`) and falls back to `center_name` — the depositing institution —
 only when a record has no broker.
 
+A broker is only ever read from the record it belongs to: a **study** shows its
+own `broker_name`, a **sample** shows its own. A sample's broker is *not*
+promoted onto its study. That inheritance used to be the only source of a study
+broker, and it was wrong in both directions — it labelled ~730 studies `NCBI` or
+`DDBJ`, which is INSDC mirroring provenance (the archive a sample record was
+copied from) rather than a submission broker, while the studies ENA genuinely
+brokers as `ELIXIR-Norway` showed nothing at all.
+
+`sample_brokers` is still carried in `ena_joined.json`: it is a Norwegian
+identity signal for the join's filter (`ELIXIR-Norway` contains "Norway"), it
+just no longer decides a study's displayed broker.
+
 EBI Search's `sra-sample` domain marks `broker_name` searchable and facetable
 but **not retrievable**, so the field is absent from every entry the fetch
 saves, whatever ENA actually holds. Left alone, the fallback fires everywhere
@@ -236,6 +248,14 @@ API — a different service, which returns the field cleanly and separately from
 - `fetch_ebi_data.py`, over `sra-sample` before the raw JSON is written
   (this is the table the dashboard renders directly), and
 - `join_ena.py`, over the samples feeding the joined study table.
+
+The same module supplies each joined study's own `broker_name` via
+`fetch_study_attribution()`, which EBI Search's sra-study domain exposes not at
+all. That call also returns the study's `center_name` and `first_public` date,
+both likewise missing from EBI Search: `center_project_name` (what the join
+reads as `center_name`) is empty for every study in practice, so without it the
+centre fallback had nothing to fall back to, and a study whose experiments all
+dropped out of the join had no date and was silently discarded by the render.
 
 The backfill is best-effort: batches that fail over the network are logged and
 skipped, and the pipeline continues with whatever attribution it already had.
