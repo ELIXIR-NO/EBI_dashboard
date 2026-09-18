@@ -147,6 +147,52 @@ def test_fetch_broker_names_batches_and_survives_a_failed_batch(monkeypatch):
     assert result == {"S3": "ELIXIR-Norway"}
 
 
+def test_fetch_study_brokers_falls_back_to_the_primary_accession_column(monkeypatch):
+    # Joined study accessions are mostly secondary (ERP/SRP/DRP) but some are
+    # primary (PRJ…), and the Portal keys those on different columns.  What the
+    # secondary column does not resolve must be retried against the primary one,
+    # or those studies silently lose their broker.
+    calls = []
+
+    def fake_post(url, data, timeout):
+        calls.append(data["query"])
+        if data["fields"].startswith("secondary_study_accession"):
+            return _FakeResponse([
+                {"secondary_study_accession": "ERP0001",
+                 "broker_name": "ELIXIR-Norway"},
+            ])
+        return _FakeResponse([
+            {"study_accession": "PRJEB0002", "broker_name": "ELIXIR-Norway"},
+        ])
+
+    monkeypatch.setattr(ena_portal, "_REQUESTS_AVAILABLE", True)
+    monkeypatch.setattr(ena_portal, "requests",
+                        type("R", (), {"post": staticmethod(fake_post)}))
+
+    result = ena_portal.fetch_study_brokers(["ERP0001", "PRJEB0002"])
+
+    assert result == {"ERP0001": "ELIXIR-Norway", "PRJEB0002": "ELIXIR-Norway"}
+    # The second call retries only what the first left unresolved.
+    assert "ERP0001" in calls[0] and "PRJEB0002" in calls[0]
+    assert "ERP0001" not in calls[1] and "PRJEB0002" in calls[1]
+
+
+def test_fetch_study_brokers_omits_studies_with_no_broker(monkeypatch):
+    # A study ENA records no broker for must be absent from the map, so the
+    # caller leaves it empty and the render falls back to center_name.
+    def fake_post(url, data, timeout):
+        return _FakeResponse([
+            {"secondary_study_accession": "ERP0001", "broker_name": ""},
+            {"secondary_study_accession": "ERP0002", "broker_name": None},
+        ])
+
+    monkeypatch.setattr(ena_portal, "_REQUESTS_AVAILABLE", True)
+    monkeypatch.setattr(ena_portal, "requests",
+                        type("R", (), {"post": staticmethod(fake_post)}))
+
+    assert ena_portal.fetch_study_brokers(["ERP0001", "ERP0002"]) == {}
+
+
 def test_load_samples_backfills_broker_only_where_missing(tmp_path, monkeypatch):
     raw_dir = tmp_path / "data" / "raw"
     monkeypatch.setattr(join_ena, "RAW_DIR", raw_dir)

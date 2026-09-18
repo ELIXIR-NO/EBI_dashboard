@@ -65,7 +65,7 @@ from norwegian_filter import (
     get_cached_filter_tiers, FALSE_POSITIVE_RE,
 )
 from paths import RAW_DIR, PROC_DIR
-from ena_portal import fetch_broker_names
+from ena_portal import fetch_broker_names, fetch_study_brokers
 
 try:
     import requests as _requests
@@ -530,12 +530,37 @@ def main():
         else:
             log.info("  No dates recovered (offline or no matching experiments)")
 
+    # ── The study's own broker ────────────────────────────────────────────────
+    # EBI Search's sra-study domain exposes no broker_name, so this is the only
+    # place a study's real broker can come from.  It deliberately does NOT fall
+    # back to sample_brokers: a sample's broker is its INSDC mirroring
+    # provenance ("NCBI"/"DDBJ" — the archive the record came from), and
+    # promoting that to the study's broker both buried the ELIXIR-Norway
+    # studies and filled the dashboard with archive names that were never
+    # submission brokers.  A study with no broker of its own has none, and the
+    # R render falls back to its center_name.
+    study_accs = [a for a in df_nor["study_acc"].dropna().tolist() if a]
+    df_nor["study_broker"] = ""
+    if study_accs:
+        log.info("  Looking up own broker_name for %d Norwegian studies …",
+                 len(study_accs))
+        study_broker_map = fetch_study_brokers(study_accs)
+        if study_broker_map:
+            df_nor["study_broker"] = (
+                df_nor["study_acc"].map(study_broker_map).fillna("")
+            )
+            log.info("  %d / %d studies have a broker of their own",
+                     len(study_broker_map), len(study_accs))
+        else:
+            log.info("  No study brokers recovered (offline or none on record)")
+
     # ── Serialise ─────────────────────────────────────────────────────────────
     output_cols = {
         "study_acc":          "accession",
         "title":              "title",
         "description":        "description",
         "center_name":        "center_name",
+        "study_broker":       "study_broker",
         "first_public_date":  "first_public_date",
         "sample_countries":   "sample_countries_str",
         "sample_centers":     "sample_centers_str",
