@@ -263,6 +263,10 @@ parse_ebi_date <- function(x) {
 #' literal match (2b) and the fuzzy fallback (4); either way the English
 #' `canonical` name is returned so the display value stays consistent.
 #'
+#' `fuzzy = FALSE` stops after the exact branches (email domain, regex pattern,
+#' literal Norwegian name), returning "Other Norway" rather than risking a
+#' Jaro-Winkler match.  Callers whose input is often foreign use it.
+#'
 #' `context_vec` (e.g. the record's own `country` field) is appended only for
 #' satisfying `(?=.*Norway|.*Norsk)` context guards on otherwise-ambiguous
 #' patterns (see e.g. "Veterinary Institute"); it is never part of `affil`
@@ -270,7 +274,8 @@ parse_ebi_date <- function(x) {
 #'
 #' Returns the canonical institution name, or "Other Norway" if nothing matches.
 normalise_institution <- function(affil_vec, email_vec = character(0),
-                                  context_vec = character(0)) {
+                                  context_vec = character(0),
+                                  fuzzy = TRUE) {
 
   # 1. Email domain lookup — highest confidence, very few false positives.
   valid_emails <- email_vec[!is.na(email_vec) & nzchar(email_vec)]
@@ -302,6 +307,14 @@ normalise_institution <- function(affil_vec, email_vec = character(0),
     }
   }
 
+  # Branches 3 and 4 are fuzzy: they will happily pull a foreign institution
+  # onto a Norwegian one that merely spells similarly ("University of Oulu" ->
+  # "University of Oslo", "University Hospital Muenster" -> "University
+  # Hospital of North Norway").  That is an acceptable trade on affiliation
+  # text already established as Norwegian, but not on ENA's center_name, which
+  # is routinely foreign — hence `fuzzy = FALSE` for that caller.
+  if (!fuzzy) return("Other Norway")
+
   # 3. Per-token JW against abbreviations (abbreviation-length tokens only).
   tokens <- unlist(strsplit(affil, "[,;/()\\s]+"))
   tokens <- tokens[nchar(tokens) >= 2L & nchar(tokens) <= 8L]
@@ -321,6 +334,41 @@ normalise_institution <- function(affil_vec, email_vec = character(0),
 
   "Other Norway"
 }
+
+#' Canonicalise raw ENA center_name values for display in the broker column.
+#'
+#' ENA's center_name is free text and wildly inconsistent: one institution shows
+#' up as "NORWEGIAN INSTITUTE OF PUBLIC HEALTH", "Norwegian Institute of Public
+#' Health (NIPH)" and "Norwegian Institute of Public Health;NIPH", and a study's
+#' value is often a semicolon-packed department chain running to 200 characters.
+#' Left raw, that is three legend entries for one institution plus a handful of
+#' unreadable ones.  normalise_institution() already resolves all of those to a
+#' single canonical name.
+#'
+#' A value it cannot place comes back "Other Norway".  That is not used here:
+#' the centers reaching this column include genuinely foreign ones (DOE Joint
+#' Genome Institute, Genoscope, Wellcome Sanger — ENA studies kept on a
+#' Norwegian sample signal rather than a Norwegian submitter), and relabelling
+#' those "Other Norway" would both hide them and assert something false.  They
+#' keep their raw name instead.
+#'
+#' Evaluated over distinct values only: normalise_institution() is a regex +
+#' Jaro-Winkler cascade, far too slow to run once per row at ~190 K rows.
+normalise_center_label <- function(x) {
+  x      <- as.character(x)
+  usable <- !is.na(x) & nzchar(x)
+  vals   <- unique(x[usable])
+  if (length(vals) == 0L) return(x)
+
+  canon <- vapply(vals, function(v) {
+    n <- as.character(normalise_institution(v, fuzzy = FALSE))[1L]
+    if (is.na(n) || !nzchar(n) || identical(n, "Other Norway")) v else n
+  }, character(1), USE.NAMES = FALSE)
+
+  x[usable] <- canon[match(x[usable], vals)]
+  x
+}
+
 
 #' Return the single affiliation string most likely to have triggered the
 #' institution match, for display in the affiliation column.
@@ -688,13 +736,17 @@ load_all_data <- function() {
     mutate(
       domain_label = DOMAIN_LABELS[domain],
       domain_label = if_else(is.na(domain_label), domain, domain_label),
-      # Broker / Center precedence, applied once for the whole frame: a broker
-      # (ENA broker_name, or the study's samples' broker_name) always wins, and
-      # the center_name is used only when no broker is set.  Keeping the two
-      # apart until here is what guarantees a center can never overwrite a
-      # broker in parse_*() or in dedupe_by_accession().
+      # Broker / Center precedence, applied once for the whole frame: the
+      # record's own ENA broker_name always wins, and its center_name is used
+      # only when no broker is set.  Keeping the two apart until here is what
+      # guarantees a center can never overwrite a broker in parse_*() or in
+      # dedupe_by_accession().
+      #
+      # Only the center is canonicalised: broker_name is a controlled ENA value
+      # ("ELIXIR-Norway") that means nothing to normalise_institution(), whereas
+      # center_name is free text that spells one institution several ways.
       broker = if_else(!is.na(ena_broker) & nzchar(ena_broker),
-                       ena_broker, ena_center),
+                       ena_broker, normalise_center_label(ena_center)),
       # Norwegian-submitter flag.  For ENA studies and ENA samples the `country`
       # field is the sample's geographic ORIGIN, not the submitter, so an entry
       # Norwegian only via country is a "Norwegian sample, foreign submitter"
