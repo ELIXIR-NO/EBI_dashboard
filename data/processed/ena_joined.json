@@ -1,6 +1,6 @@
 {
-  "join_date": "2026-10-12",
-  "study_count": 1165,
+  "join_date": "2026-10-19",
+  "study_count": 1166,
   "entries": [
     {
       "accession": "DRP011628",
@@ -13106,7 +13106,7 @@
       "center_name": "LD-group, Department of Nutriton, University of Oslo",
       "study_broker": "",
       "first_public_date": "20220706",
-      "n_experiments": 20,
+      "n_experiments": 15,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -17207,6 +17207,26 @@
       ]
     },
     {
+      "accession": "SRP515466",
+      "title": "Benthic filter-feeding Invertebrates from the Arctic as accumulators of Pollutants and tolerant bacterial communities",
+      "description": "Benthic filter-feeding Invertebrates from the Arctic as accumulators of Pollutants and tolerant bacterial communities",
+      "center_name": "Stazione Zoologica Anton Dohrn",
+      "study_broker": "",
+      "first_public_date": "20250801",
+      "n_experiments": 16,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Stazione Zoologica Anton Dohrn"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP515775",
       "title": "SmallRNA sequencing of Syndermata",
       "description": "SmallRNA sequencing of Syndermata",
@@ -18309,12 +18329,13 @@
       "center_name": "NORCE (Norwegian Research Centre )",
       "study_broker": "",
       "first_public_date": "20250801",
-      "n_experiments": 12,
+      "n_experiments": 18,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
         "Finland",
-        "Iceland"
+        "Iceland",
+        "Norway"
       ],
       "sample_centers": [
         "NORCE (Norwegian Research Centre )"
