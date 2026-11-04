@@ -1,6 +1,6 @@
 {
-  "join_date": "2026-10-26",
-  "study_count": 1167,
+  "join_date": "2026-11-03",
+  "study_count": 1164,
   "entries": [
     {
       "accession": "DRP011628",
@@ -90,6 +90,24 @@
       "domain": "sra-study",
       "sample_countries": [],
       "sample_centers": [],
+      "sample_brokers": []
+    },
+    {
+      "accession": "ERP006093",
+      "title": "Genome sequencing of several strains of the ash dieback pathogen Hymenoscyphus fraxineus",
+      "description": "Genome sequencing of several strains of the ash dieback pathogen Hymenoscyphus fraxineus",
+      "center_name": "Nematode and Neglected Genomics;IEB;University of Edinburgh;BANG",
+      "study_broker": "",
+      "first_public_date": "20140620",
+      "n_experiments": 27,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "BANG"
+      ],
       "sample_brokers": []
     },
     {
@@ -834,13 +852,19 @@
       "description": "NIPH - Neisseria meningitidis norwegian isolates",
       "center_name": "ELIXIR Norway;NIPH",
       "study_broker": "ELIXIR-Norway",
-      "first_public_date": "20261022",
-      "n_experiments": 0,
+      "first_public_date": "20261030",
+      "n_experiments": 6,
       "source": "ENA",
       "domain": "sra-study",
-      "sample_countries": [],
-      "sample_centers": [],
-      "sample_brokers": []
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "NIPH"
+      ],
+      "sample_brokers": [
+        "ELIXIR-Norway"
+      ]
     },
     {
       "accession": "ERP126482",
@@ -848,7 +872,7 @@
       "description": "NIPH – Streptococcus pyogenes norwegian isolates",
       "center_name": "ELIXIR Norway;NIPH",
       "study_broker": "ELIXIR-Norway",
-      "first_public_date": "20261022",
+      "first_public_date": "20261030",
       "n_experiments": 0,
       "source": "ENA",
       "domain": "sra-study",
@@ -891,18 +915,12 @@
       "center_name": "ELIXIR Norway;NIPH",
       "study_broker": "ELIXIR-Norway",
       "first_public_date": "20230603",
-      "n_experiments": 135,
+      "n_experiments": 0,
       "source": "ENA",
       "domain": "sra-study",
-      "sample_countries": [
-        "Norway"
-      ],
-      "sample_centers": [
-        "Norwegian Institute of Public Health (NIPH)"
-      ],
-      "sample_brokers": [
-        "ELIXIR-Norway"
-      ]
+      "sample_countries": [],
+      "sample_centers": [],
+      "sample_brokers": []
     },
     {
       "accession": "ERP127142",
@@ -1163,22 +1181,6 @@
       "domain": "sra-study",
       "sample_countries": [],
       "sample_centers": [],
-      "sample_brokers": []
-    },
-    {
-      "accession": "ERP133363",
-      "title": "Landscape genomics of a forest fungus reveals high gene flow and signatures of climate adaptation",
-      "description": "Landscape genomics of a forest fungus reveals high gene flow and signatures of climate adaptation",
-      "center_name": "University of Oslo",
-      "study_broker": "",
-      "first_public_date": "20211203",
-      "n_experiments": 23,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [],
-      "sample_centers": [
-        "University of Oslo"
-      ],
       "sample_brokers": []
     },
     {
@@ -1749,11 +1751,15 @@
       "center_name": "University Hospital of North Norway",
       "study_broker": "",
       "first_public_date": "20231103",
-      "n_experiments": 0,
+      "n_experiments": 88,
       "source": "ENA",
       "domain": "sra-study",
-      "sample_countries": [],
-      "sample_centers": [],
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "University Hospital of North Norway"
+      ],
       "sample_brokers": []
     },
     {
@@ -3002,7 +3008,7 @@
       "description": "Public Health England - Salmonella",
       "center_name": "Public Health England",
       "study_broker": "",
-      "first_public_date": "20261024",
+      "first_public_date": "20261029",
       "n_experiments": 5,
       "source": "ENA",
       "domain": "sra-study",
@@ -6449,24 +6455,6 @@
       "sample_countries": [],
       "sample_centers": [
         "VANDERBILT VACCINE CENTER"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP174996",
-      "title": "Transcriptome sequencing of K562 cells stably expressing SUMO negative MYB",
-      "description": "Transcriptome sequencing of K562 cells stably expressing SUMO negative MYB",
-      "center_name": "Odd Stokke Gabrielsen, Department of Biosciences, University of Oslo",
-      "study_broker": "",
-      "first_public_date": "20230719",
-      "n_experiments": 6,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [],
-      "sample_centers": [
-        "Odd Stokke Gabrielsen, Department of Biosciences, University of Oslo"
       ],
       "sample_brokers": [
         "NCBI"
@@ -13266,26 +13254,6 @@
       ]
     },
     {
-      "accession": "SRP348311",
-      "title": "ITS invertebrate exclusion",
-      "description": "ITS invertebrate exclusion",
-      "center_name": "Norwegian University of Life Sciences",
-      "study_broker": "",
-      "first_public_date": "20211130",
-      "n_experiments": 2,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Norway"
-      ],
-      "sample_centers": [
-        "Norwegian University of Life Sciences"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
       "accession": "SRP349340",
       "title": "Single cell transcriptomic and chromatin profiles suggest Layer Vb is the only layer with shared excitatory cell types in the medial and lateral entorhinal cortex.",
       "description": "Single cell transcriptomic and chromatin profiles suggest Layer Vb is the only layer with shared excitatory cell types in the medial and lateral entorhinal cortex.",
@@ -18869,26 +18837,6 @@
       "domain": "sra-study",
       "sample_countries": [
         "Svalbard"
-      ],
-      "sample_centers": [
-        "Norwegian Institute of Bioeconomy Research"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP614470",
-      "title": "The Arctic Alpine Decay project",
-      "description": "The Arctic Alpine Decay project",
-      "center_name": "Norwegian Institute of Bioeconomy Research",
-      "study_broker": "",
-      "first_public_date": "20260902",
-      "n_experiments": 52,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Norway"
       ],
       "sample_centers": [
         "Norwegian Institute of Bioeconomy Research"
