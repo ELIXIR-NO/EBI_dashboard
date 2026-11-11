@@ -1,6 +1,6 @@
 {
-  "join_date": "2026-11-03",
-  "study_count": 1164,
+  "join_date": "2026-11-11",
+  "study_count": 1215,
   "entries": [
     {
       "accession": "DRP011628",
@@ -15,6 +15,67 @@
       "sample_countries": [],
       "sample_centers": [
         "Royal (Dick) School of Veterinary Studies, University of Edinburgh"
+      ],
+      "sample_brokers": [
+        "DDBJ"
+      ]
+    },
+    {
+      "accession": "DRP012867",
+      "title": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
+      "description": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
+      "center_name": "RIKEN-BRC",
+      "study_broker": "",
+      "first_public_date": "20250514",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "RIKEN-BRC"
+      ],
+      "sample_brokers": [
+        "DDBJ"
+      ]
+    },
+    {
+      "accession": "DRP012869",
+      "title": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
+      "description": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
+      "center_name": "RIKEN-BRC",
+      "study_broker": "",
+      "first_public_date": "20250518",
+      "n_experiments": 4,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Atlantic Ocean",
+        "Norway"
+      ],
+      "sample_centers": [
+        "RIKEN-BRC"
+      ],
+      "sample_brokers": [
+        "DDBJ"
+      ]
+    },
+    {
+      "accession": "DRP013760",
+      "title": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
+      "description": "Genome sequencing of microbial organisms in Japan Collection of Microorganisms",
+      "center_name": "RIKEN-BRC",
+      "study_broker": "",
+      "first_public_date": "20250826",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Atlantic Ocean"
+      ],
+      "sample_centers": [
+        "RIKEN-BRC"
       ],
       "sample_brokers": [
         "DDBJ"
@@ -872,7 +933,7 @@
       "description": "NIPH – Streptococcus pyogenes norwegian isolates",
       "center_name": "ELIXIR Norway;NIPH",
       "study_broker": "ELIXIR-Norway",
-      "first_public_date": "20261030",
+      "first_public_date": "20261103",
       "n_experiments": 0,
       "source": "ENA",
       "domain": "sra-study",
@@ -1647,6 +1708,24 @@
       "sample_brokers": []
     },
     {
+      "accession": "ERP148532",
+      "title": "Reference_genome_sequencing_collembola__diptera__and_other__mostly_small__animals",
+      "description": "Reference_genome_sequencing_collembola__diptera__and_other__mostly_small__animals",
+      "center_name": "Wellcome Sanger Institute;SC",
+      "study_broker": "",
+      "first_public_date": "20261105",
+      "n_experiments": 4,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Tree of Life Programme"
+      ],
+      "sample_brokers": []
+    },
+    {
       "accession": "ERP148668",
       "title": "Genome sequencing of traditional kveik yeast used in farmhouse brewing on the west-coast of Norway",
       "description": "Genome sequencing of traditional kveik yeast used in farmhouse brewing on the west-coast of Norway",
@@ -1714,6 +1793,24 @@
       "domain": "sra-study",
       "sample_countries": [],
       "sample_centers": [],
+      "sample_brokers": []
+    },
+    {
+      "accession": "ERP149848",
+      "title": "Population Genomics of Late Stone Age Western Eurasia",
+      "description": "Population Genomics of Late Stone Age Western Eurasia",
+      "center_name": "Globe Institute",
+      "study_broker": "",
+      "first_public_date": "20250517",
+      "n_experiments": 2,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Globe Institute"
+      ],
       "sample_brokers": []
     },
     {
@@ -1889,6 +1986,26 @@
       "sample_brokers": []
     },
     {
+      "accession": "ERP160135",
+      "title": "Convolutriloba macropyga, genomic and transcriptomic data",
+      "description": "Convolutriloba macropyga, genomic and transcriptomic data",
+      "center_name": "WELLCOME SANGER INSTITUTE",
+      "study_broker": "",
+      "first_public_date": "20250317",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "EarlhamInstitute"
+      ],
+      "sample_brokers": [
+        "COPO"
+      ]
+    },
+    {
       "accession": "ERP160270",
       "title": "Analysis of a 80 000 year old Arctic faunal deposit from Norway",
       "description": "Analysis of a 80 000 year old Arctic faunal deposit from Norway",
@@ -2013,6 +2130,46 @@
       "sample_countries": [],
       "sample_centers": [],
       "sample_brokers": []
+    },
+    {
+      "accession": "ERP168610",
+      "title": "Siboglinum fiordicum, genomic and transcriptomic data",
+      "description": "Siboglinum fiordicum, genomic and transcriptomic data",
+      "center_name": "WELLCOME SANGER INSTITUTE",
+      "study_broker": "",
+      "first_public_date": "20250630",
+      "n_experiments": 4,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "EarlhamInstitute"
+      ],
+      "sample_brokers": [
+        "COPO"
+      ]
+    },
+    {
+      "accession": "ERP168629",
+      "title": "Stryphnus fortis, genomic and transcriptomic data",
+      "description": "Stryphnus fortis, genomic and transcriptomic data",
+      "center_name": "WELLCOME SANGER INSTITUTE",
+      "study_broker": "",
+      "first_public_date": "20250317",
+      "n_experiments": 8,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "EarlhamInstitute"
+      ],
+      "sample_brokers": [
+        "COPO"
+      ]
     },
     {
       "accession": "ERP169098",
@@ -2329,6 +2486,20 @@
       "center_name": "Norwegian Veterinary Institute;NVI",
       "study_broker": "",
       "first_public_date": "20251030",
+      "n_experiments": 0,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [],
+      "sample_centers": [],
+      "sample_brokers": []
+    },
+    {
+      "accession": "ERP183876",
+      "title": "Sequencing project of Pasteurella multocida from semi-domesticated reindeer in Norway",
+      "description": "Sequencing project of Pasteurella multocida from semi-domesticated reindeer in Norway",
+      "center_name": "NORWEGIAN VETERINARY INSTITUTE",
+      "study_broker": "",
+      "first_public_date": "20261106",
       "n_experiments": 0,
       "source": "ENA",
       "domain": "sra-study",
@@ -2701,6 +2872,20 @@
       "sample_brokers": []
     },
     {
+      "accession": "ERP208596",
+      "title": "Genomic baseline reveals vulnerable genetically depauperate pocket within highly structured Norwegian kelp forests",
+      "description": "Genomic baseline reveals vulnerable genetically depauperate pocket within highly structured Norwegian kelp forests",
+      "center_name": "European Bioinformatics Institute;University of Western Australia",
+      "study_broker": "EBI",
+      "first_public_date": "20261107",
+      "n_experiments": 0,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [],
+      "sample_centers": [],
+      "sample_brokers": []
+    },
+    {
       "accession": "SRP008127",
       "title": "Norwegian isolate",
       "description": "Norwegian isolate",
@@ -2971,6 +3156,26 @@
       "sample_brokers": []
     },
     {
+      "accession": "SRP040648",
+      "title": "GenomeTrakr Project: USDA - Food Safety and Inspection Service",
+      "description": "GenomeTrakr Project: USDA - Food Safety and Inspection Service",
+      "center_name": "FDA",
+      "study_broker": "",
+      "first_public_date": "20261103",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "USA"
+      ],
+      "sample_centers": [
+        "United States Department of Agriculture, Food Safety and Inspection Service"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP041532",
       "title": "Differential features of lamina-associated domains mapped by ChIP-sequencing from sonicated or micrococcal nuclease-digested chromatin",
       "description": "Differential features of lamina-associated domains mapped by ChIP-sequencing from sonicated or micrococcal nuclease-digested chromatin",
@@ -3008,14 +3213,15 @@
       "description": "Public Health England - Salmonella",
       "center_name": "Public Health England",
       "study_broker": "",
-      "first_public_date": "20261029",
-      "n_experiments": 5,
+      "first_public_date": "20261102",
+      "n_experiments": 12,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
         "United Kingdom"
       ],
       "sample_centers": [
+        "Gastrointestinal Bacteria Reference Unit, Public Health England",
         "Gastrointestinal Bacteria Reference Unit, UK Health Security Agency"
       ],
       "sample_brokers": [
@@ -3659,6 +3865,26 @@
       ]
     },
     {
+      "accession": "SRP070174",
+      "title": "Engraulis encrasicolus Raw sequence reads",
+      "description": "Engraulis encrasicolus Raw sequence reads",
+      "center_name": "Universite de Montpellier",
+      "study_broker": "",
+      "first_public_date": "20250528",
+      "n_experiments": 2,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Universite de Montpellier"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP070543",
       "title": "Extinct birds and type specimens sequencing - Natural History Museum, University of Oslo.",
       "description": "Extinct birds and type specimens sequencing - Natural History Museum, University of Oslo.",
@@ -4095,24 +4321,6 @@
       ]
     },
     {
-      "accession": "SRP086092",
-      "title": "A germline mutation in human Oxidation Resistance 1 gene causes developmental delay, epilepsy and cerebellar atrophy",
-      "description": "A germline mutation in human Oxidation Resistance 1 gene causes developmental delay, epilepsy and cerebellar atrophy",
-      "center_name": "Department of Microbiology, Rikshospitalet, Oslo University Hospital",
-      "study_broker": "",
-      "first_public_date": "20161203",
-      "n_experiments": 6,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [],
-      "sample_centers": [
-        "Department of Microbiology, Rikshospitalet, Oslo University Hospital"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
       "accession": "SRP087611",
       "title": "Alternative protein sources in the diet modulate microbiota and functionality in the distal intestine of Atlantic salmon (Salmo salar)",
       "description": "Alternative protein sources in the diet modulate microbiota and functionality in the distal intestine of Atlantic salmon (Salmo salar)",
@@ -4538,6 +4746,26 @@
       "sample_countries": [],
       "sample_centers": [
         "Norwegian University of Life Sicences"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP098812",
+      "title": "Neonectria ditissima. Genome sequencing and assembly",
+      "description": "Neonectria ditissima. Genome sequencing and assembly",
+      "center_name": "NIAB EMR",
+      "study_broker": "",
+      "first_public_date": "20250921",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "NIAB-EMR Genetics, Genomics and Breeding"
       ],
       "sample_brokers": [
         "NCBI"
@@ -7806,7 +8034,7 @@
       "center_name": "Bangor University",
       "study_broker": "",
       "first_public_date": "20260602",
-      "n_experiments": 100,
+      "n_experiments": 72,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -7815,8 +8043,6 @@
         "Greenland",
         "Iceland",
         "Indian Ocean",
-        "Japan",
-        "Mexico",
         "Portugal",
         "Sweden",
         "USA",
@@ -11895,12 +12121,15 @@
       "center_name": "NTNU",
       "study_broker": "",
       "first_public_date": "20260416",
-      "n_experiments": 2,
+      "n_experiments": 16,
       "source": "ENA",
       "domain": "sra-study",
-      "sample_countries": [],
+      "sample_countries": [
+        "Norway"
+      ],
       "sample_centers": [
-        "NTNU"
+        "NTNU",
+        "Oslo University"
       ],
       "sample_brokers": [
         "NCBI"
@@ -12291,6 +12520,26 @@
       "sample_countries": [],
       "sample_centers": [
         "Section of Inflammatory Research, Research Institute of Internal Medicine, Oslo University Hospital"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP317002",
+      "title": "Diacronema lutheri strain:NIVA-4/92 Genome sequencing and assembly",
+      "description": "Diacronema lutheri strain:NIVA-4/92 Genome sequencing and assembly",
+      "center_name": "Nord University",
+      "study_broker": "",
+      "first_public_date": "20250129",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Nord University"
       ],
       "sample_brokers": [
         "NCBI"
@@ -13094,7 +13343,7 @@
       "center_name": "LD-group, Department of Nutriton, University of Oslo",
       "study_broker": "",
       "first_public_date": "20220706",
-      "n_experiments": 20,
+      "n_experiments": 5,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -14660,7 +14909,7 @@
       "center_name": "LD-group, Department of Nutriton, University of Oslo",
       "study_broker": "",
       "first_public_date": "20231015",
-      "n_experiments": 20,
+      "n_experiments": 2,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -14688,6 +14937,26 @@
       ],
       "sample_centers": [
         "NORCE (Norwegian Research Centre )"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP399759",
+      "title": "Whole genome sequencing of Salmonella sp as part of MDU-PHL surveillance activities in Victoria, Australia Raw sequence reads",
+      "description": "Whole genome sequencing of Salmonella sp as part of MDU-PHL surveillance activities in Victoria, Australia Raw sequence reads",
+      "center_name": "Microbiological Diagnostic Unit Public Health Laboratory",
+      "study_broker": "",
+      "first_public_date": "20261003",
+      "n_experiments": 3,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Australia"
+      ],
+      "sample_centers": [
+        "Microbiological Diagnostic Unit Public Health Laboratory"
       ],
       "sample_brokers": [
         "NCBI"
@@ -14842,6 +15111,26 @@
       "sample_countries": [],
       "sample_centers": [
         "Norwegian University of Life Sciences"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP409387",
+      "title": "Multiomic analysis of microbiome and host identifies features differentiating diet and surgical induced weight loss",
+      "description": "Multiomic analysis of microbiome and host identifies features differentiating diet and surgical induced weight loss",
+      "center_name": "AstraZeneca",
+      "study_broker": "",
+      "first_public_date": "20250427",
+      "n_experiments": 307,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "pda"
       ],
       "sample_brokers": [
         "NCBI"
@@ -15177,6 +15466,26 @@
       "sample_brokers": []
     },
     {
+      "accession": "SRP431293",
+      "title": "HoliCow",
+      "description": "HoliCow",
+      "center_name": "Norwegian University of Life Sciences",
+      "study_broker": "",
+      "first_public_date": "20250129",
+      "n_experiments": 48,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "pda"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP431570",
       "title": "Limnomonas spitsbergensis CCCryo 020-99_CH genome sequencing",
       "description": "Limnomonas spitsbergensis CCCryo 020-99_CH genome sequencing",
@@ -15437,7 +15746,7 @@
       "center_name": "Oslo University Hospital",
       "study_broker": "",
       "first_public_date": "20250824",
-      "n_experiments": 15,
+      "n_experiments": 13,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -15733,12 +16042,18 @@
       "center_name": "University of Melbourne",
       "study_broker": "",
       "first_public_date": "20250129",
-      "n_experiments": 0,
+      "n_experiments": 3,
       "source": "ENA",
       "domain": "sra-study",
-      "sample_countries": [],
-      "sample_centers": [],
-      "sample_brokers": []
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "pda"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
     },
     {
       "accession": "SRP454053",
@@ -16284,7 +16599,7 @@
       "center_name": "University of Oslo",
       "study_broker": "",
       "first_public_date": "20250303",
-      "n_experiments": 72,
+      "n_experiments": 18,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -16496,7 +16811,7 @@
       "center_name": "Nord University",
       "study_broker": "",
       "first_public_date": "20250102",
-      "n_experiments": 12,
+      "n_experiments": 2,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [],
@@ -16528,10 +16843,11 @@
       "center_name": "NORCE",
       "study_broker": "",
       "first_public_date": "20250303",
-      "n_experiments": 43,
+      "n_experiments": 60,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
+        "Norway",
         "South Africa"
       ],
       "sample_centers": [
@@ -16582,6 +16898,26 @@
       ]
     },
     {
+      "accession": "SRP487342",
+      "title": "TraceLice - RRBS",
+      "description": "TraceLice - RRBS",
+      "center_name": "Institute of Marine Research",
+      "study_broker": "",
+      "first_public_date": "20250303",
+      "n_experiments": 17,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Institute of Marine Research"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP488520",
       "title": "Transcriptome (RNASeq) data of engineered human 293 cell with compromised subcellular NAD availability",
       "description": "Transcriptome (RNASeq) data of engineered human 293 cell with compromised subcellular NAD availability",
@@ -16608,12 +16944,11 @@
       "center_name": "University of Bergen",
       "study_broker": "",
       "first_public_date": "20250303",
-      "n_experiments": 80,
+      "n_experiments": 12,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
-        "Canada",
-        "USA"
+        "Canada"
       ],
       "sample_centers": [
         "University of Bergen"
@@ -16797,46 +17132,6 @@
       ]
     },
     {
-      "accession": "SRP491443",
-      "title": "Partial beta cell loss induces transient compensatory proliferation I",
-      "description": "Partial beta cell loss induces transient compensatory proliferation I",
-      "center_name": "University of Bergen",
-      "study_broker": "",
-      "first_public_date": "20250303",
-      "n_experiments": 12,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "missing"
-      ],
-      "sample_centers": [
-        "University of Bergen"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP491450",
-      "title": "Partial beta cell loss induces transient compensatory proliferation II",
-      "description": "Partial beta cell loss induces transient compensatory proliferation II",
-      "center_name": "University of Bergen",
-      "study_broker": "",
-      "first_public_date": "20250303",
-      "n_experiments": 34,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "missing"
-      ],
-      "sample_centers": [
-        "University of Bergen"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
       "accession": "SRP492034",
       "title": "16S rRNA gene sequencing of low-microbial biomass samples using new nucleic acid extraction protocol",
       "description": "16S rRNA gene sequencing of low-microbial biomass samples using new nucleic acid extraction protocol",
@@ -16849,6 +17144,26 @@
       "sample_countries": [],
       "sample_centers": [
         "University of Oslo/Oslo University Hospital"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP495529",
+      "title": "Listeria monocytogenes Genome sequencing",
+      "description": "Listeria monocytogenes Genome sequencing",
+      "center_name": "Nofima",
+      "study_broker": "",
+      "first_public_date": "20250504",
+      "n_experiments": 34,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Nofima"
       ],
       "sample_brokers": [
         "NCBI"
@@ -16869,66 +17184,6 @@
       ],
       "sample_centers": [
         "UiT The Arctic University of Norway"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP498023",
-      "title": "Characterization of the human testicular primary cells",
-      "description": "Characterization of the human testicular primary cells",
-      "center_name": "Scientific Computing, IT Division, University of Bergen",
-      "study_broker": "",
-      "first_public_date": "20250504",
-      "n_experiments": 9,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "missing"
-      ],
-      "sample_centers": [
-        "Scientific Computing, IT Division, University of Bergen"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP498024",
-      "title": "TKTL1: a new candidate gene in nonobstructive azoospermia",
-      "description": "TKTL1: a new candidate gene in nonobstructive azoospermia",
-      "center_name": "Scientific Computing, IT Division, University of Bergen",
-      "study_broker": "",
-      "first_public_date": "20250504",
-      "n_experiments": 9,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "missing"
-      ],
-      "sample_centers": [
-        "Scientific Computing, IT Division, University of Bergen"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP499420",
-      "title": "Effect of plant-based protein on gut microbiota",
-      "description": "Effect of plant-based protein on gut microbiota",
-      "center_name": "Prince of Songkla University",
-      "study_broker": "",
-      "first_public_date": "20250528",
-      "n_experiments": 1,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Thailand"
-      ],
-      "sample_centers": [
-        "Prince of Songkla University"
       ],
       "sample_brokers": [
         "NCBI"
@@ -17013,6 +17268,26 @@
       ]
     },
     {
+      "accession": "SRP504155",
+      "title": "Epigenomic variation in the European brown bear: a pilot study to assess feasibility and potential of RRBS for the study of population adaptive differentiation",
+      "description": "Epigenomic variation in the European brown bear: a pilot study to assess feasibility and potential of RRBS for the study of population adaptive differentiation",
+      "center_name": "Consiglio Nazionale delle Ricerche (CNR)",
+      "study_broker": "",
+      "first_public_date": "20250102",
+      "n_experiments": 2,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "pda"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP504297",
       "title": "Paclitaxel resistance in isogenic PDX",
       "description": "Paclitaxel resistance in isogenic PDX",
@@ -17067,7 +17342,7 @@
       "center_name": "Norwegian University of Life Sciences",
       "study_broker": "",
       "first_public_date": "20250427",
-      "n_experiments": 60,
+      "n_experiments": 14,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -17075,6 +17350,26 @@
       ],
       "sample_centers": [
         "Norwegian University of Life Sciences"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP509853",
+      "title": "Spotted wolffish seasonal profiling",
+      "description": "Spotted wolffish seasonal profiling",
+      "center_name": "Nord University",
+      "study_broker": "",
+      "first_public_date": "20250129",
+      "n_experiments": 3,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "pda"
       ],
       "sample_brokers": [
         "NCBI"
@@ -17175,6 +17470,86 @@
       ]
     },
     {
+      "accession": "SRP511992",
+      "title": "Effects of yeast-based diet on gut micorbiota of piglets",
+      "description": "Effects of yeast-based diet on gut micorbiota of piglets",
+      "center_name": "Norwegian University of Life Sciences",
+      "study_broker": "",
+      "first_public_date": "20250727",
+      "n_experiments": 76,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Norwegian University of Life Sciences"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP514018",
+      "title": "A One Health characterization of Pasteurella multocida isolates",
+      "description": "A One Health characterization of Pasteurella multocida isolates",
+      "center_name": "North Dakota State University Veterinary Diagnostic Laboratory",
+      "study_broker": "",
+      "first_public_date": "20250427",
+      "n_experiments": 2,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "North Dakota State University Veterinary Diagnostic Laboratory"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP514307",
+      "title": "Halibut nutritional requirements",
+      "description": "Halibut nutritional requirements",
+      "center_name": "Institute of Marine Research",
+      "study_broker": "",
+      "first_public_date": "20250727",
+      "n_experiments": 32,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Institute of Marine Research"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP515466",
+      "title": "Benthic filter-feeding Invertebrates from the Arctic as accumulators of Pollutants and tolerant bacterial communities",
+      "description": "Benthic filter-feeding Invertebrates from the Arctic as accumulators of Pollutants and tolerant bacterial communities",
+      "center_name": "Stazione Zoologica Anton Dohrn",
+      "study_broker": "",
+      "first_public_date": "20250801",
+      "n_experiments": 3,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Stazione Zoologica Anton Dohrn"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP515775",
       "title": "SmallRNA sequencing of Syndermata",
       "description": "SmallRNA sequencing of Syndermata",
@@ -17191,6 +17566,26 @@
       ],
       "sample_centers": [
         "UiT - The Arctic University of Norway"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP515902",
+      "title": "Cross breed 16S rRNA analysis of cervical cytobrush samples from sheep",
+      "description": "Cross breed 16S rRNA analysis of cervical cytobrush samples from sheep",
+      "center_name": "Faculty of Veterinary Medicine, Norwegian University of Life Sciences",
+      "study_broker": "",
+      "first_public_date": "20250317",
+      "n_experiments": 8,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "pda"
       ],
       "sample_brokers": [
         "NCBI"
@@ -17247,6 +17642,26 @@
       ]
     },
     {
+      "accession": "SRP518513",
+      "title": "mRNA sequencing of human stem cell-derived hepatic stellate cells",
+      "description": "mRNA sequencing of human stem cell-derived hepatic stellate cells",
+      "center_name": "University of Oslo",
+      "study_broker": "",
+      "first_public_date": "20250129",
+      "n_experiments": 48,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "University of Oslo"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP519452",
       "title": "Carcharodon carcharias strain:not provided | isolate:not provided | breed:not provided | cultivar:not provided Raw sequence reads",
       "description": "Carcharodon carcharias strain:not provided | isolate:not provided | breed:not provided | cultivar:not provided Raw sequence reads",
@@ -17286,6 +17701,26 @@
       ],
       "sample_centers": [
         "Nutrition, University of Oslo"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP519966",
+      "title": "The genetic legacy of the deliberate introduction of Pacific oysters",
+      "description": "The genetic legacy of the deliberate introduction of Pacific oysters",
+      "center_name": "College of Charleston",
+      "study_broker": "",
+      "first_public_date": "20250316",
+      "n_experiments": 12,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "College of Charleston"
       ],
       "sample_brokers": [
         "NCBI"
@@ -17346,6 +17781,66 @@
       ],
       "sample_centers": [
         "Department of Neuromedicine and Movement Sciences, Norwegian University of Science and Technology"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP521086",
+      "title": "Hormonal Trial 1 in Spotted Wolffish",
+      "description": "Hormonal Trial 1 in Spotted Wolffish",
+      "center_name": "Nord University",
+      "study_broker": "",
+      "first_public_date": "20250129",
+      "n_experiments": 18,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Nord University"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP521141",
+      "title": "Hormonal Trial 2 in Spotted Wolffish",
+      "description": "Hormonal Trial 2 in Spotted Wolffish",
+      "center_name": "Nord University",
+      "study_broker": "",
+      "first_public_date": "20250223",
+      "n_experiments": 21,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Nord University"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP521485",
+      "title": "MAGGE pH Raw sequence reads",
+      "description": "MAGGE pH Raw sequence reads",
+      "center_name": "University of Otago",
+      "study_broker": "",
+      "first_public_date": "20250821",
+      "n_experiments": 48,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "University of Otago"
       ],
       "sample_brokers": [
         "NCBI"
@@ -17486,12 +17981,32 @@
       "center_name": "Norwegian Veterinary Institute",
       "study_broker": "",
       "first_public_date": "20250921",
-      "n_experiments": 47,
+      "n_experiments": 5,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [],
       "sample_centers": [
         "Norwegian Veterinary Institute"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP529878",
+      "title": "Metagenomics of aquafarm sediment for MB vs. MG comparison",
+      "description": "Metagenomics of aquafarm sediment for MB vs. MG comparison",
+      "center_name": "TU Kaiserslautern",
+      "study_broker": "",
+      "first_public_date": "20250102",
+      "n_experiments": 5,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "pda"
       ],
       "sample_brokers": [
         "NCBI"
@@ -17562,7 +18077,7 @@
       "center_name": "Department of Microbiology, Rikshospitalet, Oslo University Hospital",
       "study_broker": "",
       "first_public_date": "20250921",
-      "n_experiments": 24,
+      "n_experiments": 7,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -17602,11 +18117,32 @@
       "center_name": "University of Oslo",
       "study_broker": "",
       "first_public_date": "20260222",
-      "n_experiments": 24,
+      "n_experiments": 141,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
-        "Denmark"
+        "Denmark",
+        "Norway"
+      ],
+      "sample_centers": [
+        "University of Oslo"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP533984",
+      "title": "The role of DNA methylation in regulation of transcriptional response to anoxia and re-oxygenation in crucian carp",
+      "description": "The role of DNA methylation in regulation of transcriptional response to anoxia and re-oxygenation in crucian carp",
+      "center_name": "University of Oslo",
+      "study_broker": "",
+      "first_public_date": "20250826",
+      "n_experiments": 48,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
       ],
       "sample_centers": [
         "University of Oslo"
@@ -17677,20 +18213,20 @@
       ]
     },
     {
-      "accession": "SRP537245",
-      "title": "Irx3 controls a sumoylation-dependent epigenetic switch between adipogenesis and osteogenesis",
-      "description": "Irx3 controls a sumoylation-dependent epigenetic switch between adipogenesis and osteogenesis",
-      "center_name": "Chymkowitch, Biosciences, University of Oslo",
+      "accession": "SRP536193",
+      "title": "Streptococcal isolates from infant stool",
+      "description": "Streptococcal isolates from infant stool",
+      "center_name": "Norwegian University of Life Sciences",
       "study_broker": "",
-      "first_public_date": "20250623",
-      "n_experiments": 10,
+      "first_public_date": "20250826",
+      "n_experiments": 16,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
-        "missing"
+        "Norway"
       ],
       "sample_centers": [
-        "Chymkowitch, Biosciences, University of Oslo"
+        "Norwegian University of Life Sciences"
       ],
       "sample_brokers": [
         "NCBI"
@@ -17797,16 +18333,58 @@
       ]
     },
     {
+      "accession": "SRP540985",
+      "title": "Analysis of genomic variation in northern gannets",
+      "description": "Analysis of genomic variation in northern gannets",
+      "center_name": "Toronto Metropolitan University",
+      "study_broker": "",
+      "first_public_date": "20250427",
+      "n_experiments": 19,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Toronto Metropolitan University"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP542531",
+      "title": "Salmo salar gill transcriptional response to natural ISAV-HPR0 infection",
+      "description": "Salmo salar gill transcriptional response to natural ISAV-HPR0 infection",
+      "center_name": "Norwegian Veterinary Institute",
+      "study_broker": "",
+      "first_public_date": "20250103",
+      "n_experiments": 62,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Norwegian Veterinary Institute"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP545891",
       "title": "Microbiota of Atlantic Salmon fed yeast in field conditions",
       "description": "Microbiota of Atlantic Salmon fed yeast in field conditions",
       "center_name": "Norwegian University of Life Sciences",
       "study_broker": "",
       "first_public_date": "20250523",
-      "n_experiments": 6,
+      "n_experiments": 73,
       "source": "ENA",
       "domain": "sra-study",
-      "sample_countries": [],
+      "sample_countries": [
+        "Norway"
+      ],
       "sample_centers": [
         "Norwegian University of Life Sciences"
       ],
@@ -17827,6 +18405,26 @@
       "sample_countries": [],
       "sample_centers": [
         "Nofima"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP547384",
+      "title": "Salmo salar kidney and spleen transcriptional response to natural SGPV infection",
+      "description": "Salmo salar kidney and spleen transcriptional response to natural SGPV infection",
+      "center_name": "Norwegian Veterinary Institute",
+      "study_broker": "",
+      "first_public_date": "20250427",
+      "n_experiments": 48,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Norwegian Veterinary Institute"
       ],
       "sample_brokers": [
         "NCBI"
@@ -17923,20 +18521,20 @@
       ]
     },
     {
-      "accession": "SRP554697",
-      "title": "Using constraint-based metabolic modeling to elucidate drug-induced metabolic changes in a cancer cell line",
-      "description": "Using constraint-based metabolic modeling to elucidate drug-induced metabolic changes in a cancer cell line",
-      "center_name": "Department of Clinical and Molecular Medicine, Norwegian University of Science and Technology - NTNU",
+      "accession": "SRP555181",
+      "title": "Mediation of systemic exposure to the immunosuppressive drug Mycophenolate mofetil by the gut microbiome in kidney transplant patients",
+      "description": "Mediation of systemic exposure to the immunosuppressive drug Mycophenolate mofetil by the gut microbiome in kidney transplant patients",
+      "center_name": "University of Oslo",
       "study_broker": "",
-      "first_public_date": "20250921",
-      "n_experiments": 24,
+      "first_public_date": "20250104",
+      "n_experiments": 107,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
-        "missing"
+        "Norway"
       ],
       "sample_centers": [
-        "Department of Clinical and Molecular Medicine, Norwegian University of Science and Technology - NTNU"
+        "University of Oslo"
       ],
       "sample_brokers": [
         "NCBI"
@@ -18003,26 +18601,6 @@
       ]
     },
     {
-      "accession": "SRP559156",
-      "title": "Metataxonomic characterization of broiler processing environmental samples",
-      "description": "Metataxonomic characterization of broiler processing environmental samples",
-      "center_name": "SINTEF Industry",
-      "study_broker": "",
-      "first_public_date": "20250214",
-      "n_experiments": 70,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Romania"
-      ],
-      "sample_centers": [
-        "SINTEF Industry"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
       "accession": "SRP560511",
       "title": "Traditional Norwegian farming practices drive biodiversity A case study from coastal heathlands",
       "description": "Traditional Norwegian farming practices drive biodiversity A case study from coastal heathlands",
@@ -18035,6 +18613,46 @@
       "sample_countries": [],
       "sample_centers": [],
       "sample_brokers": []
+    },
+    {
+      "accession": "SRP561451",
+      "title": "Plastispheres as Reservoirs of Antimicrobial Resistance",
+      "description": "Plastispheres as Reservoirs of Antimicrobial Resistance",
+      "center_name": "Norwegian University of Life Sciences",
+      "study_broker": "",
+      "first_public_date": "20250826",
+      "n_experiments": 30,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Norwegian University of Life Sciences"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP562847",
+      "title": "Gill microbiota sequencing of Atlantic salmon under climate change stressors",
+      "description": "Gill microbiota sequencing of Atlantic salmon under climate change stressors",
+      "center_name": "Instituto de Acuicultura Torre de la Sal",
+      "study_broker": "",
+      "first_public_date": "20250427",
+      "n_experiments": 60,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Instituto de Acuicultura Torre de la Sal"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
     },
     {
       "accession": "SRP563370",
@@ -18077,6 +18695,84 @@
       ]
     },
     {
+      "accession": "SRP564969",
+      "title": "Pectobacterium and Dickeya species that have been isolated in the Netherlands 1997-2020",
+      "description": "Pectobacterium and Dickeya species that have been isolated in the Netherlands 1997-2020",
+      "center_name": "NIVIP",
+      "study_broker": "",
+      "first_public_date": "20250220",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "NIVIP"
+      ],
+      "sample_brokers": []
+    },
+    {
+      "accession": "SRP564981",
+      "title": "European Luzula sect. Luzula",
+      "description": "European Luzula sect. Luzula",
+      "center_name": "Fondazione Edmund Mach",
+      "study_broker": "",
+      "first_public_date": "20250901",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Fondazione Edmund Mach"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP565160",
+      "title": "ONT & Illumina sequencing of Neisseria meningitidis and Salmonella enterica for cgMLST performance evaluation",
+      "description": "ONT & Illumina sequencing of Neisseria meningitidis and Salmonella enterica for cgMLST performance evaluation",
+      "center_name": "Sciensano",
+      "study_broker": "",
+      "first_public_date": "20250624",
+      "n_experiments": 2,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Sciensano"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP565996",
+      "title": "Enterococcus Genome sequencing and assembly",
+      "description": "Enterococcus Genome sequencing and assembly",
+      "center_name": "Norwegian Veterinary Institute (NVI)",
+      "study_broker": "",
+      "first_public_date": "20250427",
+      "n_experiments": 40,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Norwegian Veterinary Institute (NVI)"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP566142",
       "title": "Galician mussels, cockles and clams subjected to a waterborne infection with Vibrio splendidus",
       "description": "Galician mussels, cockles and clams subjected to a waterborne infection with Vibrio splendidus",
@@ -18091,6 +18787,26 @@
       ],
       "sample_centers": [
         "Institute of marine research IIM-CSIC"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP566753",
+      "title": "Temperature-induced DNA methylation changes in brown trout",
+      "description": "Temperature-induced DNA methylation changes in brown trout",
+      "center_name": "Aarhus University",
+      "study_broker": "",
+      "first_public_date": "20250623",
+      "n_experiments": 5,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Aarhus University"
       ],
       "sample_brokers": [
         "NCBI"
@@ -18123,12 +18839,18 @@
       "center_name": "University of Wisconsin-Madison",
       "study_broker": "",
       "first_public_date": "20250528",
-      "n_experiments": 0,
+      "n_experiments": 10,
       "source": "ENA",
       "domain": "sra-study",
-      "sample_countries": [],
-      "sample_centers": [],
-      "sample_brokers": []
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "University of Wisconsin-Madison"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
     },
     {
       "accession": "SRP569531",
@@ -18145,6 +18867,26 @@
       ],
       "sample_centers": [
         "West, Arctic Chronobiology and Physiology, Universitetet i Tromsø"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP569563",
+      "title": "Metagenomes from coniferous forest soils",
+      "description": "Metagenomes from coniferous forest soils",
+      "center_name": "Microbiology Institute of the Czech Academy of Sciences",
+      "study_broker": "",
+      "first_public_date": "20250805",
+      "n_experiments": 51,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Microbiology Institute of the Czech Academy of Sciences"
       ],
       "sample_brokers": [
         "NCBI"
@@ -18217,7 +18959,7 @@
       "center_name": "University of Oslo",
       "study_broker": "",
       "first_public_date": "20250801",
-      "n_experiments": 8,
+      "n_experiments": 6,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -18225,6 +18967,66 @@
       ],
       "sample_centers": [
         "University of Oslo"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP571232",
+      "title": "Mitochondrial methylation is linked to sexually dimorphic growth in Nile Tilapia (Oreochromis niloticus)",
+      "description": "Mitochondrial methylation is linked to sexually dimorphic growth in Nile Tilapia (Oreochromis niloticus)",
+      "center_name": "Nord University",
+      "study_broker": "",
+      "first_public_date": "20250801",
+      "n_experiments": 7,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Nord University"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP571287",
+      "title": "Spliceosome components as the main targets of alternative splicing",
+      "description": "Spliceosome components as the main targets of alternative splicing",
+      "center_name": "NOFIMA",
+      "study_broker": "",
+      "first_public_date": "20250418",
+      "n_experiments": 2,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "pda"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP571639",
+      "title": "Ancient DNA suggests a historical demographic decline and genetic erosion in the Atlantic bluefin tuna",
+      "description": "Ancient DNA suggests a historical demographic decline and genetic erosion in the Atlantic bluefin tuna",
+      "center_name": "University of Bologna",
+      "study_broker": "",
+      "first_public_date": "20251024",
+      "n_experiments": 10,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "University of Bologna"
       ],
       "sample_brokers": [
         "NCBI"
@@ -18277,12 +19079,12 @@
       "center_name": "NORCE (Norwegian Research Centre )",
       "study_broker": "",
       "first_public_date": "20250801",
-      "n_experiments": 12,
+      "n_experiments": 2,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
-        "Finland",
-        "Iceland"
+        "Iceland",
+        "Norway"
       ],
       "sample_centers": [
         "NORCE (Norwegian Research Centre )"
@@ -18332,20 +19134,40 @@
       ]
     },
     {
-      "accession": "SRP582470",
-      "title": "Effect of resistant secretome on immune cells",
-      "description": "Effect of resistant secretome on immune cells",
-      "center_name": "Mælandsmo lab, Department of Tumor Biology, Institute for Cancer Research, Oslo University Hospital",
+      "accession": "SRP579027",
+      "title": "Resolving Acuticulata (Metridioidea: Enthemonae: Actiniaria), a clade containing many invasive species of sea anemones",
+      "description": "Resolving Acuticulata (Metridioidea: Enthemonae: Actiniaria), a clade containing many invasive species of sea anemones",
+      "center_name": "The Ohio State University",
       "study_broker": "",
-      "first_public_date": "20250724",
-      "n_experiments": 6,
+      "first_public_date": "20250708",
+      "n_experiments": 2,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
-        "missing"
+        "Norway"
       ],
       "sample_centers": [
-        "Mælandsmo lab, Department of Tumor Biology, Institute for Cancer Research, Oslo University Hospital"
+        "The Ohio State University"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP579574",
+      "title": "De novo and horizontally transferred genes drive the evolution of bryophytes on land Genome sequencing and assembly",
+      "description": "De novo and horizontally transferred genes drive the evolution of bryophytes on land Genome sequencing and assembly",
+      "center_name": "BGI Research",
+      "study_broker": "",
+      "first_public_date": "20250528",
+      "n_experiments": 5,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "BGI Research"
       ],
       "sample_brokers": [
         "NCBI"
@@ -18372,18 +19194,64 @@
       ]
     },
     {
+      "accession": "SRP583387",
+      "title": "Hybridisation in marsh violets",
+      "description": "Hybridisation in marsh violets",
+      "center_name": "University of Oslo",
+      "study_broker": "",
+      "first_public_date": "20250511",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "University of Oslo"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP584114",
       "title": "Effect of mitigation strategies on the microbiota in rakfisk, a traditional Norwegian fermented fish product",
       "description": "Effect of mitigation strategies on the microbiota in rakfisk, a traditional Norwegian fermented fish product",
       "center_name": "Nofima AS",
       "study_broker": "",
       "first_public_date": "20250824",
-      "n_experiments": 0,
+      "n_experiments": 13,
       "source": "ENA",
       "domain": "sra-study",
-      "sample_countries": [],
-      "sample_centers": [],
-      "sample_brokers": []
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Nofima AS"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP584119",
+      "title": "Microbial Eukaryote Communities in Coniferous Forest soils",
+      "description": "Microbial Eukaryote Communities in Coniferous Forest soils",
+      "center_name": "Microbiology Institute of the Czech Academy of Science",
+      "study_broker": "",
+      "first_public_date": "20250805",
+      "n_experiments": 80,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Microbiology Institute of the Czech Academy of Sciences"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
     },
     {
       "accession": "SRP584133",
@@ -18392,12 +19260,18 @@
       "center_name": "Microbiology Institute of the Czech Academy of Science",
       "study_broker": "",
       "first_public_date": "20250805",
-      "n_experiments": 0,
+      "n_experiments": 160,
       "source": "ENA",
       "domain": "sra-study",
-      "sample_countries": [],
-      "sample_centers": [],
-      "sample_brokers": []
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Microbiology Institute of the Czech Academy of Sciences"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
     },
     {
       "accession": "SRP584359",
@@ -18406,12 +19280,18 @@
       "center_name": "Alfred-Wegener-Institut",
       "study_broker": "",
       "first_public_date": "20250512",
-      "n_experiments": 0,
+      "n_experiments": 24,
       "source": "ENA",
       "domain": "sra-study",
-      "sample_countries": [],
-      "sample_centers": [],
-      "sample_brokers": []
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Alfred-Wegener-Institut"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
     },
     {
       "accession": "SRP585019",
@@ -18434,17 +19314,37 @@
       ]
     },
     {
-      "accession": "SRP587040",
-      "title": "Exploring the bioactive properties of fucoidan from Sugar kelp to modulate the immune response and gut microbiota of Atlantic salmon",
-      "description": "Exploring the bioactive properties of fucoidan from Sugar kelp to modulate the immune response and gut microbiota of Atlantic salmon",
-      "center_name": "Norwegian University of Life Sciences",
+      "accession": "SRP585020",
+      "title": "RNA-Seq of Rhizaria for phylogenomics and comparative transcriptomics",
+      "description": "RNA-Seq of Rhizaria for phylogenomics and comparative transcriptomics",
+      "center_name": "University of Cologne",
       "study_broker": "",
-      "first_public_date": "20250913",
-      "n_experiments": 12,
+      "first_public_date": "20250515",
+      "n_experiments": 2,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
-        "missing"
+        "Norway"
+      ],
+      "sample_centers": [
+        "University of Cologne"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP585486",
+      "title": "Whole genome re-sequencing of cxaR suppressor mutants",
+      "description": "Whole genome re-sequencing of cxaR suppressor mutants",
+      "center_name": "Norwegian University of Life Sciences",
+      "study_broker": "",
+      "first_public_date": "20250516",
+      "n_experiments": 5,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
       ],
       "sample_centers": [
         "Norwegian University of Life Sciences"
@@ -18460,10 +19360,11 @@
       "center_name": "SINTEF Industry",
       "study_broker": "",
       "first_public_date": "20250824",
-      "n_experiments": 6,
+      "n_experiments": 22,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
+        "Norway",
         "Romania"
       ],
       "sample_centers": [
@@ -18480,11 +19381,31 @@
       "center_name": "University of Oslo",
       "study_broker": "",
       "first_public_date": "20250528",
-      "n_experiments": 427,
+      "n_experiments": 255,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
         "Denmark"
+      ],
+      "sample_centers": [
+        "University of Oslo"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP587539",
+      "title": "Transcriptomes of haptophyte algae",
+      "description": "Transcriptomes of haptophyte algae",
+      "center_name": "University of Oslo",
+      "study_broker": "",
+      "first_public_date": "20250528",
+      "n_experiments": 2,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
       ],
       "sample_centers": [
         "University of Oslo"
@@ -18514,6 +19435,26 @@
       ]
     },
     {
+      "accession": "SRP591078",
+      "title": "Biofilm community in biofilter of recirculating aquaculture systems (RAS)",
+      "description": "Biofilm community in biofilter of recirculating aquaculture systems (RAS)",
+      "center_name": "NTNU",
+      "study_broker": "",
+      "first_public_date": "20251004",
+      "n_experiments": 109,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "NTNU"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP592084",
       "title": "GEO accession GSE299622 is currently private and is scheduled to be released on Dec 01, 2026.",
       "description": "GEO accession GSE299622 is currently private and is scheduled to be released on Dec 01, 2026.",
@@ -18528,6 +19469,26 @@
       ],
       "sample_centers": [
         "Department of Microbiology, Rikshospitalet, Oslo University Hospital"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP592809",
+      "title": "Aphomia sociella isolate:RMS-2025",
+      "description": "Aphomia sociella isolate:RMS-2025",
+      "center_name": "Norwegian University of Life Science",
+      "study_broker": "",
+      "first_public_date": "20260615",
+      "n_experiments": 2,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Norwegian University of Life Science"
       ],
       "sample_brokers": [
         "NCBI"
@@ -18554,6 +19515,26 @@
       ]
     },
     {
+      "accession": "SRP593833",
+      "title": "SUSBROIL",
+      "description": "SUSBROIL",
+      "center_name": "The Norwegian Veterinary Institute",
+      "study_broker": "",
+      "first_public_date": "20250624",
+      "n_experiments": 17,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "The Norwegian Veterinary Institute"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP593986",
       "title": "RTpi-MI and RTdi-MI cells transcriptome",
       "description": "RTpi-MI and RTdi-MI cells transcriptome",
@@ -18566,6 +19547,66 @@
       "sample_countries": [],
       "sample_centers": [
         "Department of Paraclinical Sciences, Faculty of Veterinary Medicine, Norwegian University of Life Sc"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP594446",
+      "title": "Phakellia ventilabrum Raw sequence reads",
+      "description": "Phakellia ventilabrum Raw sequence reads",
+      "center_name": "Universidad Complutense de Madrid",
+      "study_broker": "",
+      "first_public_date": "20250629",
+      "n_experiments": 28,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Museo Nacional de Ciencias Naturales"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP595571",
+      "title": "Assembly-based analysis of the infant gut microbiome reveals novel ubiquitous plasmids",
+      "description": "Assembly-based analysis of the infant gut microbiome reveals novel ubiquitous plasmids",
+      "center_name": "University of Oslo",
+      "study_broker": "",
+      "first_public_date": "20250629",
+      "n_experiments": 10,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "University of Oslo"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP596213",
+      "title": "GEO accession GSE301263 is currently private and is scheduled to be released on Jun 30, 2026.",
+      "description": "GEO accession GSE301263 is currently private and is scheduled to be released on Jun 30, 2026.",
+      "center_name": "Institute of Basic Medical Sciences, University of Oslo",
+      "study_broker": "",
+      "first_public_date": "20261019",
+      "n_experiments": 12,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "missing"
+      ],
+      "sample_centers": [
+        "Institute of Basic Medical Sciences, University of Oslo"
       ],
       "sample_brokers": [
         "NCBI"
@@ -18654,18 +19695,114 @@
       "sample_brokers": []
     },
     {
+      "accession": "SRP602603",
+      "title": "Impact of antibiotic choice on immune response and antibiotic resistance development in piglets experimentally infected with Escherichia coli",
+      "description": "Impact of antibiotic choice on immune response and antibiotic resistance development in piglets experimentally infected with Escherichia coli",
+      "center_name": "Norwegian Private Veterinary Services",
+      "study_broker": "",
+      "first_public_date": "20250727",
+      "n_experiments": 9,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Norwegian Private Veterinary Services"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP602710",
+      "title": "Fungal communities in semi-natural grassland soils in Norway",
+      "description": "Fungal communities in semi-natural grassland soils in Norway",
+      "center_name": "",
+      "study_broker": "",
+      "first_public_date": "",
+      "n_experiments": 0,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [],
+      "sample_centers": [],
+      "sample_brokers": []
+    },
+    {
+      "accession": "SRP603632",
+      "title": "OH-AMR-Diag",
+      "description": "OH-AMR-Diag",
+      "center_name": "University of Inland Norway",
+      "study_broker": "",
+      "first_public_date": "20250728",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "University of Inland Norway"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP603635",
+      "title": "Festuca rubra rhizosphere and root 16S and ITS amplicon sequencing Vestland Climate Grid",
+      "description": "Festuca rubra rhizosphere and root 16S and ITS amplicon sequencing Vestland Climate Grid",
+      "center_name": "Institute of Botany, Czech Academy of Sciences",
+      "study_broker": "",
+      "first_public_date": "20250826",
+      "n_experiments": 82,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Institute of Botany, Czech Academy of Sciences"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP603798",
       "title": "Metabarcoding and targeted barcoding to enhance Norwegian Shelf species inventories",
       "description": "Metabarcoding and targeted barcoding to enhance Norwegian Shelf species inventories",
       "center_name": "NORCE",
       "study_broker": "",
       "first_public_date": "20250728",
-      "n_experiments": 6,
+      "n_experiments": 36,
       "source": "ENA",
       "domain": "sra-study",
-      "sample_countries": [],
+      "sample_countries": [
+        "Norway"
+      ],
       "sample_centers": [
         "NORCE"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP605168",
+      "title": "Microbiome in recirculating aquaculture system",
+      "description": "Microbiome in recirculating aquaculture system",
+      "center_name": "NTNU",
+      "study_broker": "",
+      "first_public_date": "20251221",
+      "n_experiments": 76,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "NTNU"
       ],
       "sample_brokers": [
         "NCBI"
@@ -18678,11 +19815,12 @@
       "center_name": "University of Agder",
       "study_broker": "",
       "first_public_date": "20250826",
-      "n_experiments": 76,
+      "n_experiments": 103,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
-        "Denmark"
+        "Denmark",
+        "Norway"
       ],
       "sample_centers": [
         "University of Agder"
@@ -18712,11 +19850,12 @@
       "center_name": "Institute of Marine Research (IMR)",
       "study_broker": "",
       "first_public_date": "20250804",
-      "n_experiments": 3,
+      "n_experiments": 5,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
-        "North Sea"
+        "North Sea",
+        "Norway"
       ],
       "sample_centers": [
         "Institute of Marine Research (IMR)"
@@ -18766,13 +19905,53 @@
       ]
     },
     {
+      "accession": "SRP609618",
+      "title": "De novo transcriptome assembly Strongylocentrotus droebachiensis Subarctic",
+      "description": "De novo transcriptome assembly Strongylocentrotus droebachiensis Subarctic",
+      "center_name": "Alfred Wegener Institute Helmholtz Centre for Polar and marine research",
+      "study_broker": "",
+      "first_public_date": "20250822",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Alfred Wegener Institute Helmholtz Centre for Polar and marine research"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
+      "accession": "SRP609771",
+      "title": "De novo transcriptome assembly Strongylocentrotus pallidus Subarctic",
+      "description": "De novo transcriptome assembly Strongylocentrotus pallidus Subarctic",
+      "center_name": "Alfred Wegener Institute Helmholtz Centre for Polar and marine research",
+      "study_broker": "",
+      "first_public_date": "20250822",
+      "n_experiments": 1,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [
+        "Norway"
+      ],
+      "sample_centers": [
+        "Alfred Wegener Institute Helmholtz Centre for Polar and marine research"
+      ],
+      "sample_brokers": [
+        "NCBI"
+      ]
+    },
+    {
       "accession": "SRP612386",
       "title": "Mechanisms of sexually dimorphic adipose tissue remodelling upon prolonged breastfeeding",
       "description": "Mechanisms of sexually dimorphic adipose tissue remodelling upon prolonged breastfeeding",
       "center_name": "University of Oslo",
       "study_broker": "",
       "first_public_date": "20250921",
-      "n_experiments": 24,
+      "n_experiments": 9,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -18852,7 +20031,7 @@
       "center_name": "NOFIMA",
       "study_broker": "",
       "first_public_date": "20250831",
-      "n_experiments": 54,
+      "n_experiments": 21,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -18941,44 +20120,6 @@
       ]
     },
     {
-      "accession": "SRP618202",
-      "title": "Rsearch",
-      "description": "Rsearch",
-      "center_name": "NMBU",
-      "study_broker": "",
-      "first_public_date": "20250914",
-      "n_experiments": 15,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [],
-      "sample_centers": [
-        "NMBU"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP619332",
-      "title": "Onygena corvina",
-      "description": "Onygena corvina",
-      "center_name": "Norwegian University of Life Sciences (NMBU)",
-      "study_broker": "",
-      "first_public_date": "20250914",
-      "n_experiments": 3,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "France"
-      ],
-      "sample_centers": [
-        "Norwegian University of Life Sciences (NMBU)"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
       "accession": "SRP620930",
       "title": "Genomic analysis of European hake populations across Atlantic and Mediterranean regions",
       "description": "Genomic analysis of European hake populations across Atlantic and Mediterranean regions",
@@ -19059,6 +20200,34 @@
       "sample_brokers": [
         "NCBI"
       ]
+    },
+    {
+      "accession": "SRP630924",
+      "title": "airborne metagenome collected at Ny Alesund Arctic During winter 2024",
+      "description": "airborne metagenome collected at Ny Alesund Arctic During winter 2024",
+      "center_name": "",
+      "study_broker": "",
+      "first_public_date": "",
+      "n_experiments": 0,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [],
+      "sample_centers": [],
+      "sample_brokers": []
+    },
+    {
+      "accession": "SRP630992",
+      "title": "airborne Fungal metagenome collected at Ny Alesund Arctic during winter 2024",
+      "description": "airborne Fungal metagenome collected at Ny Alesund Arctic during winter 2024",
+      "center_name": "",
+      "study_broker": "",
+      "first_public_date": "",
+      "n_experiments": 0,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [],
+      "sample_centers": [],
+      "sample_brokers": []
     },
     {
       "accession": "SRP632821",
@@ -19287,26 +20456,6 @@
       ]
     },
     {
-      "accession": "SRP648591",
-      "title": "15-GS21-ROV-106-ROV432 Metagenome",
-      "description": "15-GS21-ROV-106-ROV432 Metagenome",
-      "center_name": "University of Bergen",
-      "study_broker": "",
-      "first_public_date": "20260323",
-      "n_experiments": 2,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Atlantic Ocean"
-      ],
-      "sample_centers": [
-        "University of Bergen"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
       "accession": "SRP648620",
       "title": "Hydrothermal vent metagenome - AEGIR hydrothermal vent field - GS20-ROV9-BS1 Metagenomic assembly",
       "description": "Hydrothermal vent metagenome - AEGIR hydrothermal vent field - GS20-ROV9-BS1 Metagenomic assembly",
@@ -19314,146 +20463,6 @@
       "study_broker": "",
       "first_public_date": "20260323",
       "n_experiments": 2,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Atlantic Ocean"
-      ],
-      "sample_centers": [
-        "University of Bergen"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP648650",
-      "title": "Hydrothermal vent metagenome - AEGIR hydrothermal vent field - GS20-ROV9-BS2 Metagenomic assembly Metagenome",
-      "description": "Hydrothermal vent metagenome - AEGIR hydrothermal vent field - GS20-ROV9-BS2 Metagenomic assembly Metagenome",
-      "center_name": "University of Bergen",
-      "study_broker": "",
-      "first_public_date": "20260323",
-      "n_experiments": 1,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Atlantic Ocean"
-      ],
-      "sample_centers": [
-        "University of Bergen"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP648671",
-      "title": "17ROV21-Big Biojelly biofilm Metagenome",
-      "description": "17ROV21-Big Biojelly biofilm Metagenome",
-      "center_name": "University of Bergen",
-      "study_broker": "",
-      "first_public_date": "20260323",
-      "n_experiments": 2,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Atlantic Ocean"
-      ],
-      "sample_centers": [
-        "University of Bergen"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP648675",
-      "title": "GS22-107-ROV569-BS1 Metagenome",
-      "description": "GS22-107-ROV569-BS1 Metagenome",
-      "center_name": "University of Bergen",
-      "study_broker": "",
-      "first_public_date": "20260323",
-      "n_experiments": 2,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Atlantic Ocean"
-      ],
-      "sample_centers": [
-        "University of Bergen"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP648700",
-      "title": "Microbial biofilm collected from diffuse flow using a hydrolic biosyringe at AEGIR hydrothermal vent field - GS22-107-ROV569-BS2",
-      "description": "Microbial biofilm collected from diffuse flow using a hydrolic biosyringe at AEGIR hydrothermal vent field - GS22-107-ROV569-BS2",
-      "center_name": "University of Bergen",
-      "study_broker": "",
-      "first_public_date": "20260323",
-      "n_experiments": 2,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Atlantic Ocean"
-      ],
-      "sample_centers": [
-        "University of Bergen"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP649075",
-      "title": "GS22-107-ROV579-BS1 biofilm",
-      "description": "GS22-107-ROV579-BS1 biofilm",
-      "center_name": "University of Bergen",
-      "study_broker": "",
-      "first_public_date": "20260323",
-      "n_experiments": 2,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Atlantic Ocean"
-      ],
-      "sample_centers": [
-        "University of Bergen"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP649087",
-      "title": "GS22-107-ROV579-BS2 biofilm",
-      "description": "GS22-107-ROV579-BS2 biofilm",
-      "center_name": "University of Bergen",
-      "study_broker": "",
-      "first_public_date": "20260323",
-      "n_experiments": 2,
-      "source": "ENA",
-      "domain": "sra-study",
-      "sample_countries": [
-        "Atlantic Ocean"
-      ],
-      "sample_centers": [
-        "University of Bergen"
-      ],
-      "sample_brokers": [
-        "NCBI"
-      ]
-    },
-    {
-      "accession": "SRP649208",
-      "title": "GS21_106_ROV435A_BS-A biofilm",
-      "description": "GS21_106_ROV435A_BS-A biofilm",
-      "center_name": "University of Bergen",
-      "study_broker": "",
-      "first_public_date": "20260322",
-      "n_experiments": 1,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -19519,6 +20528,20 @@
       "sample_brokers": [
         "NCBI"
       ]
+    },
+    {
+      "accession": "SRP653387",
+      "title": "Microbiome survey in recirculating aquaculture system for Atlantic salmon production in Norway and Faroe Islands",
+      "description": "Microbiome survey in recirculating aquaculture system for Atlantic salmon production in Norway and Faroe Islands",
+      "center_name": "",
+      "study_broker": "",
+      "first_public_date": "",
+      "n_experiments": 0,
+      "source": "ENA",
+      "domain": "sra-study",
+      "sample_countries": [],
+      "sample_centers": [],
+      "sample_brokers": []
     },
     {
       "accession": "SRP654958",
@@ -19783,7 +20806,7 @@
       "center_name": "Natural History Museum, University of Oslo",
       "study_broker": "",
       "first_public_date": "20260429",
-      "n_experiments": 30,
+      "n_experiments": 18,
       "source": "ENA",
       "domain": "sra-study",
       "sample_countries": [
@@ -20145,7 +21168,7 @@
       "description": "Metagenomic Sequences of Norwegian Stream",
       "center_name": "",
       "study_broker": "",
-      "first_public_date": "",
+      "first_public_date": "20261019",
       "n_experiments": 0,
       "source": "ENA",
       "domain": "sra-study",
